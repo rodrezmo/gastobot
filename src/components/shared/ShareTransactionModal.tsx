@@ -22,6 +22,7 @@ export function ShareTransactionModal({ transaction, open, onClose }: ShareTrans
   const [splits, setSplits] = useState<Map<string, number>>(new Map());
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const createSharedTransaction = useSharedStore((s) => s.createSharedTransaction);
 
   const handleAddParticipant = (user: UserSearchResult) => {
@@ -72,6 +73,7 @@ export function ShareTransactionModal({ transaction, open, onClose }: ShareTrans
   const handleSubmit = async () => {
     if (participants.length === 0) return;
     setSubmitting(true);
+    setError('');
     try {
       await createSharedTransaction({
         transaction_id: transaction.id,
@@ -80,8 +82,9 @@ export function ShareTransactionModal({ transaction, open, onClose }: ShareTrans
         note: note || undefined,
       });
       onClose();
-    } catch {
-      // error handled by store
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al compartir');
+      console.error('Share error:', err);
     } finally {
       setSubmitting(false);
     }
@@ -143,6 +146,13 @@ export function ShareTransactionModal({ transaction, open, onClose }: ShareTrans
             splits={splits}
             onSplitsChange={setSplits}
           />
+        )}
+
+        {/* Error */}
+        {error && (
+          <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
+            {error}
+          </div>
         )}
 
         {/* Note */}
