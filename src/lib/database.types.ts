@@ -173,6 +173,305 @@ export interface Database {
           },
         ];
       };
+      shared_transactions: {
+        Row: {
+          id: string;
+          transaction_id: string;
+          owner_id: string;
+          split_method: 'equal' | 'custom' | 'percentage';
+          total_amount: number;
+          note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          transaction_id: string;
+          owner_id: string;
+          split_method?: 'equal' | 'custom' | 'percentage';
+          total_amount: number;
+          note?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          transaction_id?: string;
+          owner_id?: string;
+          split_method?: 'equal' | 'custom' | 'percentage';
+          total_amount?: number;
+          note?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'shared_transactions_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'transactions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'shared_transactions_owner_id_fkey';
+            columns: ['owner_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      shared_transaction_participants: {
+        Row: {
+          id: string;
+          shared_transaction_id: string;
+          user_id: string;
+          amount: number;
+          percentage: number | null;
+          status: 'pending' | 'accepted' | 'rejected';
+          created_transaction_id: string | null;
+          responded_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          shared_transaction_id: string;
+          user_id: string;
+          amount: number;
+          percentage?: number | null;
+          status?: 'pending' | 'accepted' | 'rejected';
+          created_transaction_id?: string | null;
+          responded_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          shared_transaction_id?: string;
+          user_id?: string;
+          amount?: number;
+          percentage?: number | null;
+          status?: 'pending' | 'accepted' | 'rejected';
+          created_transaction_id?: string | null;
+          responded_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'shared_transaction_participants_shared_transaction_id_fkey';
+            columns: ['shared_transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'shared_transactions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'shared_transaction_participants_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'shared_transaction_participants_created_transaction_id_fkey';
+            columns: ['created_transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'transactions';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      groups: {
+        Row: {
+          id: string;
+          name: string;
+          description: string | null;
+          creator_id: string;
+          status: 'active' | 'settled' | 'archived';
+          currency: string;
+          created_at: string;
+          settled_at: string | null;
+          archived_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string | null;
+          creator_id: string;
+          status?: 'active' | 'settled' | 'archived';
+          currency?: string;
+          created_at?: string;
+          settled_at?: string | null;
+          archived_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string | null;
+          creator_id?: string;
+          status?: 'active' | 'settled' | 'archived';
+          currency?: string;
+          created_at?: string;
+          settled_at?: string | null;
+          archived_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'groups_creator_id_fkey';
+            columns: ['creator_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      group_members: {
+        Row: {
+          id: string;
+          group_id: string;
+          user_id: string;
+          role: 'admin' | 'member';
+          joined_at: string;
+        };
+        Insert: {
+          id?: string;
+          group_id: string;
+          user_id: string;
+          role?: 'admin' | 'member';
+          joined_at?: string;
+        };
+        Update: {
+          id?: string;
+          group_id?: string;
+          user_id?: string;
+          role?: 'admin' | 'member';
+          joined_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'group_members_group_id_fkey';
+            columns: ['group_id'];
+            isOneToOne: false;
+            referencedRelation: 'groups';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'group_members_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      group_expenses: {
+        Row: {
+          id: string;
+          group_id: string;
+          paid_by: string;
+          amount: number;
+          description: string;
+          date: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          group_id: string;
+          paid_by: string;
+          amount: number;
+          description: string;
+          date?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          group_id?: string;
+          paid_by?: string;
+          amount?: number;
+          description?: string;
+          date?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'group_expenses_group_id_fkey';
+            columns: ['group_id'];
+            isOneToOne: false;
+            referencedRelation: 'groups';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'group_expenses_paid_by_fkey';
+            columns: ['paid_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      settlements: {
+        Row: {
+          id: string;
+          from_user_id: string;
+          to_user_id: string;
+          amount: number;
+          group_id: string | null;
+          shared_transaction_id: string | null;
+          status: 'pending' | 'confirmed';
+          note: string | null;
+          created_at: string;
+          confirmed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          from_user_id: string;
+          to_user_id: string;
+          amount: number;
+          group_id?: string | null;
+          shared_transaction_id?: string | null;
+          status?: 'pending' | 'confirmed';
+          note?: string | null;
+          created_at?: string;
+          confirmed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          from_user_id?: string;
+          to_user_id?: string;
+          amount?: number;
+          group_id?: string | null;
+          shared_transaction_id?: string | null;
+          status?: 'pending' | 'confirmed';
+          note?: string | null;
+          created_at?: string;
+          confirmed_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'settlements_from_user_id_fkey';
+            columns: ['from_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'settlements_to_user_id_fkey';
+            columns: ['to_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'settlements_group_id_fkey';
+            columns: ['group_id'];
+            isOneToOne: false;
+            referencedRelation: 'groups';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'settlements_shared_transaction_id_fkey';
+            columns: ['shared_transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'shared_transactions';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -214,11 +513,25 @@ export interface Database {
           balance: number;
         }[];
       };
+      search_users_by_email: {
+        Args: { search_email: string };
+        Returns: {
+          id: string;
+          email: string;
+          full_name: string | null;
+          avatar_url: string | null;
+        }[];
+      };
     };
     Enums: {
       category_type: 'income' | 'expense';
       transaction_type: 'income' | 'expense';
       budget_period: 'weekly' | 'monthly';
+      split_method: 'equal' | 'custom' | 'percentage';
+      participant_status: 'pending' | 'accepted' | 'rejected';
+      group_status: 'active' | 'settled' | 'archived';
+      group_role: 'admin' | 'member';
+      settlement_status: 'pending' | 'confirmed';
     };
     CompositeTypes: Record<string, never>;
   };

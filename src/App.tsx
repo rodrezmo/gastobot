@@ -12,6 +12,9 @@ import { TransactionListPage } from '@/pages/TransactionListPage.tsx';
 import { TransactionFormPage } from '@/pages/TransactionFormPage.tsx';
 import { ReportsPage } from '@/pages/ReportsPage.tsx';
 import { SettingsPage } from '@/pages/SettingsPage.tsx';
+import { SharedPage } from '@/pages/SharedPage.tsx';
+import { CreateGroupPage } from '@/pages/CreateGroupPage.tsx';
+import { GroupDetailPage } from '@/pages/GroupDetailPage.tsx';
 
 function App() {
   const { initialize } = useAuthStore();
@@ -47,6 +50,9 @@ function App() {
           <Route path="/transactions/new" element={<TransactionFormPage />} />
           <Route path="/transactions/:id/edit" element={<TransactionFormPage />} />
           <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/shared" element={<SharedPage />} />
+          <Route path="/shared/groups/new" element={<CreateGroupPage />} />
+          <Route path="/shared/groups/:id" element={<GroupDetailPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
 

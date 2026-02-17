@@ -5,8 +5,11 @@ import {
   PlusCircle,
   BarChart3,
   Settings,
+  Users,
 } from 'lucide-react';
 import { useUIStore } from '@/stores/uiStore.ts';
+import { useSharedStore } from '@/stores/sharedStore.ts';
+import { NotificationBadge } from '@/components/ui/NotificationBadge.tsx';
 import { cn } from '@/utils/cn.ts';
 
 const links = [
@@ -14,11 +17,13 @@ const links = [
   { to: '/transactions', label: 'Transacciones', icon: ArrowLeftRight },
   { to: '/transactions/new', label: 'Nueva transaccion', icon: PlusCircle },
   { to: '/reports', label: 'Reportes', icon: BarChart3 },
+  { to: '/shared', label: 'Compartidos', icon: Users },
   { to: '/settings', label: 'Configuracion', icon: Settings },
 ];
 
 export function Sidebar() {
   const { sidebarOpen, setSidebarOpen } = useUIStore();
+  const pendingCount = useSharedStore((s) => s.pendingSharedExpenses.length);
 
   return (
     <>
@@ -53,6 +58,9 @@ export function Sidebar() {
             >
               <Icon className="h-5 w-5" />
               {label}
+              {to === '/shared' && pendingCount > 0 && (
+                <NotificationBadge count={pendingCount} />
+              )}
             </NavLink>
           ))}
         </nav>
