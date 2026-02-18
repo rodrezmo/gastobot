@@ -711,12 +711,34 @@ gastobot/
 
 ### v2 - Extended
 
-| Module | Scope |
-|---|---|
-| **Budgets** | Set monthly/weekly budgets per category, progress bars, alerts at 80%/100% |
-| **Shared Expenses** | Create groups, split transactions, track balances between members |
-| **Multi-currency** | Currency selector per transaction, exchange rate API, base currency conversion |
-| **Settings Advanced** | Export CSV, recurring transactions, notification preferences |
+| Module | Scope | Estado |
+|---|---|---|
+| **Shared Expenses - Dividir** | Compartir transacción con otros usuarios por %. Compartir al crear o después. Owner siempre incluido con % auto-calculado. Transacción se guarda con la porción del owner. | Completo |
+| **Shared Expenses - Vaquitas** | Grupos temporales, gastos compartidos, liquidación | UI lista |
+| **Budgets** | Set monthly/weekly budgets per category, progress bars, alerts at 80%/100% | Schema lista |
+| **Multi-currency** | Currency selector per transaction, exchange rate API, base currency conversion | Pendiente |
+| **Settings Advanced** | Export CSV, recurring transactions, notification preferences | Pendiente |
+
+### Shared Expenses - Decisiones Arquitectónicas
+
+**IMPORTANTE:** Todas las operaciones cross-table usan funciones `SECURITY DEFINER` en vez de políticas RLS cruzadas. Ver `DEVLOG.md` para el detalle del problema de recursión circular.
+
+RPCs disponibles:
+- `create_shared_transaction(p_transaction_id, p_split_method, p_total_amount, p_note, p_participants JSONB)`
+- `get_pending_shared_expenses()` → retorna gastos pendientes para el usuario actual
+- `get_my_shared_expenses()` → retorna gastos que el usuario compartió con otros
+- `respond_to_shared_expense(p_participant_id, p_status)` → acepta/rechaza y crea transacción espejo con categoría equivalente del usuario
+
+Los tipos de estas funciones están definidos manualmente en `src/lib/database.types.ts` (sección Functions).
+
+Flujo de compartir al crear (`TransactionForm.tsx`):
+1. Toggle "Compartir este gasto" (solo gastos nuevos, no edición)
+2. Buscar amigos → definir % para cada uno → % del owner = 100% - suma amigos
+3. Transacción se guarda con monto = porción del owner (no el total)
+4. Se crea shared_transaction con total_amount = monto original ingresado
+5. Owner se auto-acepta, amigos quedan en "pending"
+
+Componentes UI null-safe: todos los charts y listas usan optional chaining (`category?.name`) y filtran categorías null para evitar crashes por transacciones con categorías de otros usuarios.
 
 ---
 

@@ -17,80 +17,67 @@ export async function searchUsersByEmail(email: string): Promise<UserSearchResul
 export async function createSharedTransaction(
   params: CreateSharedTransactionParams,
 ): Promise<void> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error('No autenticado');
+  const { error } = await supabase.rpc('create_shared_transaction', {
+    p_transaction_id: params.transaction_id,
+    p_split_method: params.split_method,
+    p_total_amount: params.participants.reduce((sum, p) => sum + p.amount, 0),
+    p_note: params.note ?? null,
+    p_participants: params.participants.map((p) => ({
+      user_id: p.user_id,
+      amount: p.amount,
+      percentage: p.percentage ?? null,
+    })),
+  });
 
-  const { data: shared, error: sharedErr } = await supabase
-    .from('shared_transactions')
-    .insert({
-      transaction_id: params.transaction_id,
-      owner_id: user.id,
-      split_method: params.split_method,
-      total_amount: params.participants.reduce((sum, p) => sum + p.amount, 0),
-      note: params.note ?? null,
-    })
-    .select()
-    .single();
-
-  if (sharedErr) throw sharedErr;
-
-  const participants = params.participants.map((p) => ({
-    shared_transaction_id: shared.id,
-    user_id: p.user_id,
-    amount: p.amount,
-    percentage: p.percentage ?? null,
-    status: (p.user_id === user.id ? 'accepted' : 'pending') as 'accepted' | 'pending',
-  }));
-
-  const { error: partErr } = await supabase
-    .from('shared_transaction_participants')
-    .insert(participants);
-
-  if (partErr) throw partErr;
+  if (error) throw error;
 }
 
 export async function getPendingSharedExpenses(): Promise<SharedTransactionWithDetails[]> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return [];
-
-  const { data, error } = await supabase
-    .from('shared_transaction_participants')
-    .select(
-      `
-      shared_transaction_id,
-      shared_transactions (
-        *,
-        transactions (*),
-        owner:profiles!shared_transactions_owner_id_fkey (id, email, full_name, avatar_url),
-        shared_transaction_participants (
-          *,
-          user:profiles!shared_transaction_participants_user_id_fkey (id, email, full_name, avatar_url)
-        )
-      )
-    `,
-    )
-    .eq('user_id', user.id)
-    .eq('status', 'pending');
-
+  const { data, error } = await supabase.rpc('get_pending_shared_expenses');
   if (error) throw error;
 
-  return (
-    (data ?? [])
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map((row: any) => {
-        const st = row.shared_transactions;
-        return {
-          ...st,
-          transaction: st.transactions,
-          owner: st.owner,
-          participants: st.shared_transaction_participants,
-        };
-      }) as SharedTransactionWithDetails[]
-  );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((row: any) => ({
+    id: row.shared_id,
+    transaction_id: row.tx_id,
+    owner_id: row.owner_id,
+    split_method: row.split_method,
+    total_amount: row.total_amount,
+    note: row.note,
+    created_at: row.shared_created_at,
+    transaction: {
+      id: row.tx_id,
+      description: row.tx_description,
+      amount: row.tx_amount,
+      type: row.tx_type,
+      date: row.tx_date,
+      category: {
+        name: row.tx_category_name,
+        icon: row.tx_category_icon,
+        color: row.tx_category_color,
+      },
+    },
+    owner: {
+      id: row.owner_id,
+      email: row.owner_email,
+      full_name: row.owner_full_name,
+      avatar_url: row.owner_avatar_url,
+    },
+    participants: [
+      {
+        id: row.participant_id,
+        shared_transaction_id: row.shared_id,
+        user_id: '', // filled by caller via auth
+        amount: row.participant_amount,
+        percentage: row.participant_percentage,
+        status: row.participant_status,
+        created_transaction_id: null,
+        responded_at: null,
+        created_at: row.shared_created_at,
+        user: { id: '', email: '', full_name: null, avatar_url: null },
+      },
+    ],
+  })) as unknown as SharedTransactionWithDetails[];
 }
 
 export async function getMySharedExpenses(): Promise<SharedTransactionWithDetails[]> {
@@ -99,44 +86,70 @@ export async function getMySharedExpenses(): Promise<SharedTransactionWithDetail
   } = await supabase.auth.getUser();
   if (!user) return [];
 
-  const { data, error } = await supabase
-    .from('shared_transactions')
-    .select(
-      `
-      *,
-      transactions (*),
-      owner:profiles!shared_transactions_owner_id_fkey (id, email, full_name, avatar_url),
-      shared_transaction_participants (
-        *,
-        user:profiles!shared_transaction_participants_user_id_fkey (id, email, full_name, avatar_url)
-      )
-    `,
-    )
-    .eq('owner_id', user.id)
-    .order('created_at', { ascending: false });
-
+  const { data, error } = await supabase.rpc('get_my_shared_expenses');
   if (error) throw error;
 
-  return (
-    (data ?? [])
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map((st: any) => ({
-        ...st,
-        transaction: st.transactions,
-        owner: st.owner,
-        participants: st.shared_transaction_participants,
-      })) as SharedTransactionWithDetails[]
-  );
+  // Group rows by shared_id (each participant is a separate row)
+  const grouped = new Map<string, SharedTransactionWithDetails>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const row of (data ?? []) as any[]) {
+    let shared = grouped.get(row.shared_id);
+    if (!shared) {
+      shared = {
+        id: row.shared_id,
+        transaction_id: row.tx_id,
+        owner_id: user.id,
+        split_method: row.split_method,
+        total_amount: row.total_amount,
+        note: row.note,
+        created_at: row.shared_created_at,
+        transaction: {
+          id: row.tx_id,
+          description: row.tx_description,
+          amount: row.tx_amount,
+          type: row.tx_type,
+          date: row.tx_date,
+        } as SharedTransactionWithDetails['transaction'],
+        owner: {
+          id: user.id,
+          email: user.email ?? '',
+          full_name: null,
+          avatar_url: null,
+        },
+        participants: [],
+      };
+      grouped.set(row.shared_id, shared);
+    }
+    shared.participants.push({
+      id: row.participant_id,
+      shared_transaction_id: row.shared_id,
+      user_id: row.participant_user_id,
+      amount: row.participant_amount,
+      percentage: row.participant_percentage,
+      status: row.participant_status,
+      created_transaction_id: null,
+      responded_at: null,
+      created_at: row.shared_created_at,
+      user: {
+        id: row.participant_user_id,
+        email: row.participant_email,
+        full_name: row.participant_full_name,
+        avatar_url: null,
+      },
+    });
+  }
+
+  return Array.from(grouped.values());
 }
 
 export async function respondToSharedExpense(
   participantId: string,
   status: 'accepted' | 'rejected',
 ): Promise<void> {
-  const { error } = await supabase
-    .from('shared_transaction_participants')
-    .update({ status, responded_at: new Date().toISOString() })
-    .eq('id', participantId);
+  const { error } = await supabase.rpc('respond_to_shared_expense', {
+    p_participant_id: participantId,
+    p_status: status,
+  });
 
   if (error) throw error;
 }

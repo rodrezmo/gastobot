@@ -12,116 +12,56 @@ import type {
 } from '@/types/shared.ts';
 
 export async function createGroup(params: CreateGroupParams): Promise<Group> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error('No autenticado');
+  // Uses SECURITY DEFINER RPC to avoid self-referential RLS on group_members
+  const { data: groupId, error } = await supabase.rpc('create_group_with_members', {
+    p_name: params.name,
+    p_description: params.description ?? null,
+    p_member_emails: params.member_emails,
+    p_currency: params.currency ?? 'ARS',
+  });
+  if (error) throw error;
 
-  const { data: group, error: groupErr } = await supabase
+  const { data: group, error: fetchErr } = await supabase
     .from('groups')
-    .insert({
-      name: params.name,
-      description: params.description ?? null,
-      creator_id: user.id,
-    })
-    .select()
+    .select('*')
+    .eq('id', groupId as string)
     .single();
 
-  if (groupErr) throw groupErr;
-
-  // Add creator as admin
-  await supabase.from('group_members').insert({
-    group_id: group.id,
-    user_id: user.id,
-    role: 'admin',
-  });
-
-  // Search and add members by email
-  for (const email of params.member_emails) {
-    const { data: users } = await supabase.rpc('search_users_by_email', {
-      search_email: email,
-    });
-    if (users && users.length > 0) {
-      await supabase.from('group_members').insert({
-        group_id: group.id,
-        user_id: users[0].id,
-        role: 'member',
-      });
-    }
-  }
-
+  if (fetchErr) throw fetchErr;
   return group as Group;
 }
 
 export async function getGroups(): Promise<GroupWithMembers[]> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return [];
-
-  const { data, error } = await supabase
-    .from('groups')
-    .select(
-      `
-      *,
-      group_members (
-        *,
-        user:profiles!group_members_user_id_fkey (id, email, full_name, avatar_url)
-      )
-    `,
-    )
-    .order('created_at', { ascending: false });
-
+  // Uses SECURITY DEFINER RPC to avoid self-referential RLS on group_members
+  const { data, error } = await supabase.rpc('get_user_groups');
   if (error) throw error;
-
-  return (
-    (data ?? [])
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map((g: any) => ({
-        ...g,
-        members: g.group_members,
-      })) as GroupWithMembers[]
-  );
+  return (data ?? []) as unknown as GroupWithMembers[];
 }
 
 export async function getGroupDetail(groupId: string): Promise<GroupDetail> {
-  const { data: group, error: groupErr } = await supabase
-    .from('groups')
-    .select(
-      `
-      *,
-      group_members (
-        *,
-        user:profiles!group_members_user_id_fkey (id, email, full_name, avatar_url)
-      ),
-      group_expenses (
-        *,
-        payer:profiles!group_expenses_paid_by_fkey (id, email, full_name, avatar_url)
-      ),
-      settlements (
-        *,
-        from_user:profiles!settlements_from_user_id_fkey (id, email, full_name, avatar_url),
-        to_user:profiles!settlements_to_user_id_fkey (id, email, full_name, avatar_url)
-      )
-    `,
-    )
-    .eq('id', groupId)
-    .single();
-
-  if (groupErr) throw groupErr;
+  // Uses SECURITY DEFINER RPC to avoid self-referential RLS on group_members
+  const { data, error } = await supabase.rpc('get_group_detail', {
+    p_group_id: groupId,
+  });
+  if (error) throw error;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const g = group as any;
-  const expenses = g.group_expenses ?? [];
-  const total = expenses.reduce((sum: number, e: { amount: number }) => sum + e.amount, 0);
+  const g = data as any;
+  const expenses = g.expenses ?? [];
+  const total = expenses.reduce((sum: number, e: { amount: number }) => sum + Number(e.amount), 0);
 
   return {
     ...g,
-    members: g.group_members,
-    expenses,
     total,
-    settlements: g.settlements ?? [],
   } as GroupDetail;
+}
+
+export async function addMemberToGroup(groupId: string, email: string): Promise<void> {
+  const { error } = await supabase.rpc('add_member_to_group', {
+    p_group_id: groupId,
+    p_email: email,
+  });
+  if (error) throw error;
 }
 
 export async function addGroupExpense(params: AddGroupExpenseParams): Promise<GroupExpense> {

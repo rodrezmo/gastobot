@@ -6,9 +6,10 @@ import type { MemberBalance } from '@/types/shared.ts';
 interface MemberListProps {
   members: MemberBalance[];
   adminIds?: string[];
+  currency?: string;
 }
 
-export function MemberList({ members, adminIds = [] }: MemberListProps) {
+export function MemberList({ members, adminIds = [], currency = 'ARS' }: MemberListProps) {
   return (
     <div className="space-y-2">
       {members.map((m) => (
@@ -30,7 +31,7 @@ export function MemberList({ members, adminIds = [] }: MemberListProps) {
                 )}
               </div>
               <p className="text-xs text-gray-500">
-                Pago: {formatCurrency(m.paid)} / Parte justa: {formatCurrency(m.fairShare)}
+                Pagó: {formatCurrency(m.paid, currency)} · Parte justa: {formatCurrency(m.fairShare, currency)}
               </p>
             </div>
           </div>
@@ -45,7 +46,7 @@ export function MemberList({ members, adminIds = [] }: MemberListProps) {
             )}
           >
             {m.netBalance > 0.01 && '+'}
-            {formatCurrency(m.netBalance)}
+            {formatCurrency(m.netBalance, currency)}
           </span>
         </div>
       ))}

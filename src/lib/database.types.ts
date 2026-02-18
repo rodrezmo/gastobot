@@ -522,6 +522,90 @@ export interface Database {
           avatar_url: string | null;
         }[];
       };
+      respond_to_shared_expense: {
+        Args: { p_participant_id: string; p_status: string };
+        Returns: undefined;
+      };
+      create_shared_transaction: {
+        Args: {
+          p_transaction_id: string;
+          p_split_method: string;
+          p_total_amount: number;
+          p_note: string | null;
+          p_participants: { user_id: string; amount: number; percentage: number | null }[];
+        };
+        Returns: string;
+      };
+      get_pending_shared_expenses: {
+        Args: Record<string, never>;
+        Returns: {
+          participant_id: string;
+          participant_amount: number;
+          participant_percentage: number | null;
+          participant_status: string;
+          shared_id: string;
+          split_method: string;
+          total_amount: number;
+          note: string | null;
+          shared_created_at: string;
+          owner_id: string;
+          owner_email: string;
+          owner_full_name: string | null;
+          owner_avatar_url: string | null;
+          tx_id: string;
+          tx_description: string | null;
+          tx_amount: number;
+          tx_type: string;
+          tx_date: string;
+          tx_category_name: string | null;
+          tx_category_icon: string | null;
+          tx_category_color: string | null;
+        }[];
+      };
+      get_my_shared_expenses: {
+        Args: Record<string, never>;
+        Returns: {
+          shared_id: string;
+          split_method: string;
+          total_amount: number;
+          note: string | null;
+          shared_created_at: string;
+          tx_id: string;
+          tx_description: string | null;
+          tx_amount: number;
+          tx_type: string;
+          tx_date: string;
+          tx_category_name: string | null;
+          participant_id: string;
+          participant_user_id: string;
+          participant_amount: number;
+          participant_percentage: number | null;
+          participant_status: string;
+          participant_email: string;
+          participant_full_name: string | null;
+        }[];
+      };
+      create_group_with_members: {
+        Args: {
+          p_name: string;
+          p_description: string | null;
+          p_member_emails: string[];
+          p_currency?: string;
+        };
+        Returns: string;
+      };
+      get_user_groups: {
+        Args: Record<string, never>;
+        Returns: Json;
+      };
+      get_group_detail: {
+        Args: { p_group_id: string };
+        Returns: Json;
+      };
+      add_member_to_group: {
+        Args: { p_group_id: string; p_email: string };
+        Returns: undefined;
+      };
     };
     Enums: {
       category_type: 'income' | 'expense';

@@ -20,10 +20,10 @@ export function TransactionItem({ transaction: t, onDelete }: TransactionItemPro
     <>
       <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
         <div className="flex items-center gap-3">
-          <Badge label={t.category.name} color={t.category.color} />
+          <Badge label={t.category?.name ?? 'Sin categoría'} color={t.category?.color ?? '#6b7280'} />
           <div>
             <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-              {t.description ?? t.category.name}
+              {t.description ?? t.category?.name ?? 'Sin categoría'}
             </p>
             <p className="text-xs text-gray-500">{formatDate(t.date)}</p>
           </div>

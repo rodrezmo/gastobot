@@ -54,6 +54,7 @@ export function TransactionFormPage() {
             }
           }}
           submitLabel={isEdit ? 'Guardar cambios' : 'Agregar transaccion'}
+          isEdit={isEdit}
         />
       </Card>
     </div>

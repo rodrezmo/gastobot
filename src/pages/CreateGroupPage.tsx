@@ -14,6 +14,7 @@ export function CreateGroupPage() {
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [currency, setCurrency] = useState('ARS');
   const [members, setMembers] = useState<UserSearchResult[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -38,6 +39,7 @@ export function CreateGroupPage() {
         name: name.trim(),
         description: description.trim() || undefined,
         member_emails: members.map((m) => m.email),
+        currency,
       });
       navigate('/shared');
     } catch {
@@ -75,6 +77,24 @@ export function CreateGroupPage() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Moneda
+            </label>
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+            >
+              <option value="ARS">ARS - Peso argentino</option>
+              <option value="USD">USD - Dólar</option>
+              <option value="EUR">EUR - Euro</option>
+              <option value="BRL">BRL - Real brasileño</option>
+              <option value="CLP">CLP - Peso chileno</option>
+              <option value="UYU">UYU - Peso uruguayo</option>
+            </select>
+          </div>
 
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">

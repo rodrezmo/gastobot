@@ -6,10 +6,11 @@ import type { GroupExpenseWithPayer } from '@/types/shared.ts';
 interface GroupExpenseListProps {
   expenses: GroupExpenseWithPayer[];
   currentUserId: string;
+  currency?: string;
   onDelete?: (expenseId: string) => void;
 }
 
-export function GroupExpenseList({ expenses, currentUserId, onDelete }: GroupExpenseListProps) {
+export function GroupExpenseList({ expenses, currentUserId, currency = 'ARS', onDelete }: GroupExpenseListProps) {
   if (expenses.length === 0) {
     return (
       <p className="py-6 text-center text-sm text-gray-500">
@@ -35,7 +36,7 @@ export function GroupExpenseList({ expenses, currentUserId, onDelete }: GroupExp
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
-              {formatCurrency(expense.amount)}
+              {formatCurrency(Number(expense.amount), currency)}
             </span>
             {expense.paid_by === currentUserId && onDelete && (
               <button

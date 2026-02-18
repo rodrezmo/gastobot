@@ -7,11 +7,13 @@ interface ReportPieChartProps {
 }
 
 export function ReportPieChart({ data }: ReportPieChartProps) {
-  const chartData = data.map((d) => ({
-    name: d.category.name,
-    value: d.total,
-    color: d.category.color,
-  }));
+  const chartData = data
+    .filter((d) => d.category != null)
+    .map((d) => ({
+      name: d.category.name,
+      value: d.total,
+      color: d.category.color,
+    }));
 
   if (chartData.length === 0) {
     return (

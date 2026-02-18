@@ -7,11 +7,13 @@ interface SpendingChartProps {
 }
 
 export function SpendingChart({ data }: SpendingChartProps) {
-  const chartData = data.map((d) => ({
-    name: d.category.name,
-    value: d.total,
-    color: d.category.color,
-  }));
+  const chartData = data
+    .filter((d) => d.category != null)
+    .map((d) => ({
+      name: d.category.name,
+      value: d.total,
+      color: d.category.color,
+    }));
 
   if (chartData.length === 0) {
     return (

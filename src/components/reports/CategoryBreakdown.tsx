@@ -17,6 +17,7 @@ export function CategoryBreakdown({ data }: CategoryBreakdownProps) {
       ) : (
         <div className="space-y-3">
           {data
+            .filter(({ category }) => category != null)
             .sort((a, b) => b.total - a.total)
             .map(({ category, total }) => {
               const pct = grandTotal > 0 ? (total / grandTotal) * 100 : 0;

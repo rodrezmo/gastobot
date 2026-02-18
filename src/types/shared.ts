@@ -148,6 +148,7 @@ export interface CreateGroupParams {
   name: string;
   description?: string;
   member_emails: string[];
+  currency?: string;
 }
 
 export interface AddGroupExpenseParams {

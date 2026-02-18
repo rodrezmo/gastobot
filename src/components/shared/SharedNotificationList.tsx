@@ -8,13 +8,12 @@ import type { SharedTransactionWithDetails } from '@/types/shared.ts';
 interface SharedNotificationListProps {
   expenses: SharedTransactionWithDetails[];
   onRespond: (participantId: string, status: 'accepted' | 'rejected') => Promise<void>;
-  currentUserId: string;
+  currentUserId?: string;
 }
 
 export function SharedNotificationList({
   expenses,
   onRespond,
-  currentUserId,
 }: SharedNotificationListProps) {
   const [respondingId, setRespondingId] = useState<string | null>(null);
 
@@ -33,8 +32,8 @@ export function SharedNotificationList({
     <div className="space-y-3">
       {expenses.map((shared) => {
         const myParticipation = shared.participants.find(
-          (p) => p.user_id === currentUserId && p.status === 'pending',
-        );
+          (p) => p.status === 'pending',
+        ) ?? shared.participants[0];
         if (!myParticipation) return null;
 
         return (

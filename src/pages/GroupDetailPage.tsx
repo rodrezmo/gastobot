@@ -8,11 +8,12 @@ import { GroupExpenseList } from '@/components/groups/GroupExpenseList.tsx';
 import { GroupExpenseForm } from '@/components/groups/GroupExpenseForm.tsx';
 import { MemberList } from '@/components/groups/MemberList.tsx';
 import { SettlementSummary } from '@/components/groups/SettlementSummary.tsx';
+import { FriendSearch } from '@/components/shared/FriendSearch.tsx';
 import { useGroupDetail } from '@/hooks/useGroupDetail.ts';
 import { useAuthStore } from '@/stores/authStore.ts';
 import { formatCurrency } from '@/utils/formatCurrency.ts';
 import { cn } from '@/utils/cn.ts';
-import type { MemberBalance } from '@/types/shared.ts';
+import type { MemberBalance, UserSearchResult } from '@/types/shared.ts';
 
 type Tab = 'expenses' | 'members' | 'balance';
 
@@ -26,11 +27,14 @@ export function GroupDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('expenses');
+  const [addingMember, setAddingMember] = useState(false);
+  const [addMemberError, setAddMemberError] = useState('');
   const user = useAuthStore((s) => s.user);
 
   const {
     group,
     loading,
+    addMember,
     addExpense,
     deleteExpense,
     settlements,
@@ -41,13 +45,13 @@ export function GroupDetailPage() {
   const memberBalances: MemberBalance[] = useMemo(() => {
     if (!group) return [];
     const { expenses, members } = group;
-    const total = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const total = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
     const fairShare = members.length > 0 ? total / members.length : 0;
 
     return members.map((m) => {
       const paid = expenses
         .filter((e) => e.paid_by === m.user_id)
-        .reduce((sum, e) => sum + e.amount, 0);
+        .reduce((sum, e) => sum + Number(e.amount), 0);
       return {
         userId: m.user_id,
         userName: m.user.full_name || m.user.email,
@@ -62,6 +66,21 @@ export function GroupDetailPage() {
     () => (group?.members.filter((m) => m.role === 'admin').map((m) => m.user_id) ?? []),
     [group],
   );
+
+  const isCreator = user?.id === group?.creator_id;
+
+  const handleAddMember = async (selectedUser: UserSearchResult) => {
+    if (!group) return;
+    setAddMemberError('');
+    setAddingMember(true);
+    try {
+      await addMember(selectedUser.email);
+    } catch (err) {
+      setAddMemberError(err instanceof Error ? err.message : 'Error al agregar miembro');
+    } finally {
+      setAddingMember(false);
+    }
+  };
 
   if (loading && !group) return <Spinner className="py-12" />;
   if (!group) return <p className="py-12 text-center text-gray-500">Grupo no encontrado</p>;
@@ -91,7 +110,8 @@ export function GroupDetailPage() {
             <p className="mt-1 text-sm text-gray-500">{group.description}</p>
           )}
           <p className="mt-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-            Total: {formatCurrency(group.total, group.currency)} - {group.members.length} miembros
+            Total: {formatCurrency(group.total, group.currency)} · {group.members.length} miembro
+            {group.members.length !== 1 ? 's' : ''} · {group.currency}
           </p>
         </div>
       </div>
@@ -127,6 +147,7 @@ export function GroupDetailPage() {
             <GroupExpenseList
               expenses={group.expenses}
               currentUserId={user?.id ?? ''}
+              currency={group.currency}
               onDelete={group.status === 'active' ? (id) => void deleteExpense(id) : undefined}
             />
           </Card>
@@ -134,13 +155,31 @@ export function GroupDetailPage() {
       )}
 
       {activeTab === 'members' && (
-        <Card title="Miembros">
-          <MemberList members={memberBalances} adminIds={adminIds} />
-        </Card>
+        <div className="space-y-4">
+          <Card title="Miembros">
+            <MemberList members={memberBalances} adminIds={adminIds} currency={group.currency} />
+          </Card>
+          {isCreator && group.status === 'active' && (
+            <Card title="Agregar miembro">
+              <div className="space-y-2">
+                <FriendSearch
+                  onSelect={handleAddMember}
+                  excludeIds={group.members.map((m) => m.user_id)}
+                />
+                {addingMember && (
+                  <p className="text-xs text-gray-500">Agregando miembro...</p>
+                )}
+                {addMemberError && (
+                  <p className="text-xs text-red-500">{addMemberError}</p>
+                )}
+              </div>
+            </Card>
+          )}
+        </div>
       )}
 
       {activeTab === 'balance' && (
-        <Card title="Liquidacion">
+        <Card title="Balance y liquidacion">
           <SettlementSummary
             transfers={settlements}
             groupId={group.id}
@@ -148,6 +187,8 @@ export function GroupDetailPage() {
             onCreateSettlement={createSettlement}
             onSettleGroup={settleGroup}
             groupStatus={group.status}
+            memberBalances={memberBalances}
+            currency={group.currency}
           />
         </Card>
       )}

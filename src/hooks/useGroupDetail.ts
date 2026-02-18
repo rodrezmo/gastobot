@@ -11,6 +11,7 @@ export function useGroupDetail(groupId: string) {
   return {
     group: store.currentGroup,
     loading: store.loading,
+    addMember: (email: string) => store.addMember(groupId, email),
     addExpense: store.addExpense,
     deleteExpense: store.deleteExpense,
     settlements: store.settlements,
