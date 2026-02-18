@@ -4,7 +4,7 @@
 
 ---
 
-## Estado Actual (Febrero 2025)
+## Estado Actual (Febrero 2026)
 
 ### Deployment
 - **URL Producción**: https://gastobot.vercel.app
@@ -21,7 +21,7 @@
 | Transacciones (CRUD, filtros, categorías) | Completo | v1 |
 | Reportes (pie chart, breakdown, tendencia) | Completo | v1 |
 | Compartidos - Dividir gasto | Completo | v2 |
-| Compartidos - Vaquitas (grupos) | UI lista, pendiente testing | v2 |
+| Compartidos - Vaquitas (grupos) | Completo | v2 |
 | Presupuestos | Schema lista, UI diferida | v2 |
 | Multi-moneda | Pendiente | v2 |
 | Settings/Perfil | Pendiente | v2 |
@@ -98,6 +98,8 @@ Las políticas circulares eliminadas:
 | 007 | `functions.sql` | RPCs: monthly_summary, category_breakdown, monthly_trend, balance |
 | 008 | `shared_expenses.sql` | 6 tablas compartidas, enums, RLS, search_users_by_email |
 | 009 | `shared_expenses_rpcs.sql` | RPCs SECURITY DEFINER: create/get/respond shared expenses. Elimina trigger y políticas circulares. |
+| 010 | `group_rpcs.sql` | Fix vaquitas: elimina políticas RLS auto-referenciales en group_members, agrega RPCs SECURITY DEFINER: create_group_with_members, get_user_groups, get_group_detail. |
+| 011 | `group_improvements.sql` | Agrega moneda a create_group_with_members, nuevo RPC add_member_to_group (creator only). |
 
 *La migración 009 fue ejecutada en SQL Editor en múltiples pasos y consolidada como archivo en el repo.*
 
@@ -144,6 +146,14 @@ Las políticas circulares eliminadas:
 ### 10. Gasto compartido muestra monto total en dashboard del owner
 - **Causa:** La transacción se creaba con el monto completo ($1000) y después se compartía, pero el dashboard mostraba los $1000 en vez de la porción del owner
 - **Fix:** Al crear+compartir en un solo paso, la transacción se guarda con el monto del owner (ej: 50% = $500). El `shared_transaction.total_amount` registra el total original ($1000) y User B recibe su porción al aceptar.
+
+### 11. Vaquitas no se podían crear (infinite recursion + bootstrap problem)
+- **Causa:** Las políticas RLS de `group_members` eran auto-referenciales (subquery a `group_members` desde policies de `group_members`). Además, la política de INSERT exigía que el usuario ya fuera admin, pero al crear el grupo no existía ninguna fila todavía.
+- **Fix:** Migración 010 — eliminar políticas circulares, agregar políticas simples no-recursivas, crear RPCs SECURITY DEFINER para todas las operaciones cross-table (mismo patrón que migración 009).
+
+### 12. Tab Balance no mostraba métricas útiles
+- **Causa:** Solo mostraba las transferencias sugeridas, sin el breakdown de parte justa / deuda por miembro.
+- **Fix:** `SettlementSummary` ahora acepta `memberBalances` y `currency`, muestra breakdown por miembro (pagó / parte justa / saldo) encima de las transferencias.
 
 ---
 
@@ -231,14 +241,22 @@ src/
 
 ---
 
+## Workflow Git
+
+A partir de la versión estable de Febrero 2026, se trabaja con ramas:
+- `main` → siempre deployable, solo recibe merges de features terminadas
+- `feat/<nombre>` → una rama por feature, se mergea a main cuando está lista y probada
+
+---
+
 ## Pendientes / Próximos Pasos
 
-- [ ] Testing completo del flujo de vaquitas (grupos)
+- [x] ~~Testing completo del flujo de vaquitas (grupos)~~ (completo, en producción)
+- [x] ~~Guardar migración 009 como archivo SQL~~ (consolidada en `009_shared_expenses_rpcs.sql`)
+- [ ] Sistema de amigos / contactos (limitar a quién se puede compartir y agregar a vaquitas)
 - [ ] Notificaciones en tiempo real (Supabase Realtime)
 - [ ] Presupuestos UI (schema ya existe)
 - [ ] Settings/Perfil de usuario
 - [ ] Multi-moneda
-- [x] ~~Guardar migración 009 como archivo SQL~~ (consolidada en `009_shared_expenses_rpcs.sql`)
-- [ ] Crear ROADMAP.md con plan de features
-- [ ] Code-splitting para reducir bundle size (~878KB)
+- [ ] Code-splitting para reducir bundle size (~881KB)
 - [ ] Compartir después de crear: ajustar monto del owner en la transacción existente (hoy queda el total original)
