@@ -13,10 +13,10 @@ import type {
 
 export async function createGroup(params: CreateGroupParams): Promise<Group> {
   // Uses SECURITY DEFINER RPC to avoid self-referential RLS on group_members
-  const { data: groupId, error } = await supabase.rpc('create_group_with_members', {
+  const { data: groupId, error } = await supabase.rpc('create_group_with_member_ids', {
     p_name: params.name,
     p_description: params.description ?? null,
-    p_member_emails: params.member_emails,
+    p_member_ids: params.member_ids,
     p_currency: params.currency ?? 'ARS',
   });
   if (error) throw error;
@@ -56,10 +56,10 @@ export async function getGroupDetail(groupId: string): Promise<GroupDetail> {
   } as GroupDetail;
 }
 
-export async function addMemberToGroup(groupId: string, email: string): Promise<void> {
-  const { error } = await supabase.rpc('add_member_to_group', {
+export async function addMemberToGroup(groupId: string, userId: string): Promise<void> {
+  const { error } = await supabase.rpc('add_member_to_group_by_id', {
     p_group_id: groupId,
-    p_email: email,
+    p_user_id: userId,
   });
   if (error) throw error;
 }

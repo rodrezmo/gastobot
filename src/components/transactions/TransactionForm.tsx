@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button.tsx';
 import { Input } from '@/components/ui/Input.tsx';
 import { Select } from '@/components/ui/Select.tsx';
 import { FriendSearch } from '@/components/shared/FriendSearch.tsx';
+import { NicknameRequired } from '@/components/shared/NicknameRequired.tsx';
 import { useCategoryStore } from '@/stores/categoryStore.ts';
 import { useSharedStore } from '@/stores/sharedStore.ts';
 import { useAuthStore } from '@/stores/authStore.ts';
@@ -217,10 +218,14 @@ export function TransactionForm({ initialValues, onSubmit, submitLabel, isEdit }
 
           {shareEnabled && (
             <div className="space-y-3">
-              <FriendSearch
-                onSelect={handleAddFriend}
-                excludeIds={[...(user ? [user.id] : []), ...friends.map((f) => f.id)]}
-              />
+              {!user?.nickname ? (
+                <NicknameRequired />
+              ) : (
+                <FriendSearch
+                  onSelect={handleAddFriend}
+                  excludeIds={[...(user ? [user.id] : []), ...friends.map((f) => f.id)]}
+                />
+              )}
 
               {friends.length > 0 && (
                 <div className="space-y-2">
@@ -246,7 +251,8 @@ export function TransactionForm({ initialValues, onSubmit, submitLabel, isEdit }
                           &times;
                         </button>
                         <span className="truncate text-xs text-gray-700 dark:text-gray-300">
-                          {f.full_name || f.email}
+                          @{f.nickname}
+                          {f.full_name ? ` · ${f.full_name}` : ''}
                         </span>
                       </div>
                       <div className="flex items-center gap-1">

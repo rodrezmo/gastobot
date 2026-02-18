@@ -52,7 +52,7 @@ export async function getProfile(userId: string): Promise<Profile | null> {
 
 export async function updateProfile(
   userId: string,
-  updates: Partial<Pick<Profile, 'full_name' | 'avatar_url' | 'currency'>>,
+  updates: Partial<Pick<Profile, 'full_name' | 'avatar_url' | 'currency' | 'nickname'>>,
 ) {
   const { data, error } = await supabase
     .from('profiles')

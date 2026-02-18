@@ -17,7 +17,7 @@ interface GroupState {
   fetchGroups: () => Promise<void>;
   fetchGroupDetail: (groupId: string) => Promise<void>;
   createGroup: (params: CreateGroupParams) => Promise<void>;
-  addMember: (groupId: string, email: string) => Promise<void>;
+  addMember: (groupId: string, userId: string) => Promise<void>;
   addExpense: (params: AddGroupExpenseParams) => Promise<void>;
   deleteExpense: (expenseId: string) => Promise<void>;
   calculateSettlements: (groupId: string) => SettlementTransfer[];
@@ -118,9 +118,9 @@ export const useGroupStore = create<GroupState>((set, get) => ({
     await get().fetchGroups();
   },
 
-  addMember: async (groupId, email) => {
+  addMember: async (groupId, userId) => {
     const { addMemberToGroup } = await import('@/services/groupService.ts');
-    await addMemberToGroup(groupId, email);
+    await addMemberToGroup(groupId, userId);
     await get().fetchGroupDetail(groupId);
   },
 

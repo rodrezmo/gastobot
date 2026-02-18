@@ -147,7 +147,7 @@ export interface RespondToSharedExpenseParams {
 export interface CreateGroupParams {
   name: string;
   description?: string;
-  member_emails: string[];
+  member_ids: string[];
   currency?: string;
 }
 
@@ -168,7 +168,8 @@ export interface CreateSettlementParams {
 
 export interface UserSearchResult {
   id: string;
-  email: string;
+  nickname: string;
+  masked_email: string;
   full_name: string | null;
   avatar_url: string | null;
 }

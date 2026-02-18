@@ -16,6 +16,7 @@ export interface Database {
           full_name: string | null;
           avatar_url: string | null;
           currency: string;
+          nickname: string | null;
           created_at: string;
         };
         Insert: {
@@ -24,6 +25,7 @@ export interface Database {
           full_name?: string | null;
           avatar_url?: string | null;
           currency?: string;
+          nickname?: string | null;
           created_at?: string;
         };
         Update: {
@@ -32,9 +34,46 @@ export interface Database {
           full_name?: string | null;
           avatar_url?: string | null;
           currency?: string;
+          nickname?: string | null;
           created_at?: string;
         };
         Relationships: [];
+      };
+      contacts: {
+        Row: {
+          id: string;
+          user_id: string;
+          contact_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          contact_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          contact_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'contacts_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'contacts_contact_id_fkey';
+            columns: ['contact_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       categories: {
         Row: {
@@ -513,14 +552,42 @@ export interface Database {
           balance: number;
         }[];
       };
-      search_users_by_email: {
-        Args: { search_email: string };
+      search_users_by_nickname: {
+        Args: { search_query: string };
         Returns: {
           id: string;
-          email: string;
+          nickname: string;
+          masked_email: string;
           full_name: string | null;
           avatar_url: string | null;
         }[];
+      };
+      get_my_contacts: {
+        Args: Record<string, never>;
+        Returns: {
+          id: string;
+          nickname: string;
+          masked_email: string;
+          full_name: string | null;
+          avatar_url: string | null;
+        }[];
+      };
+      save_contact: {
+        Args: { p_contact_id: string };
+        Returns: undefined;
+      };
+      create_group_with_member_ids: {
+        Args: {
+          p_name: string;
+          p_description: string | null;
+          p_member_ids: string[];
+          p_currency?: string;
+        };
+        Returns: string;
+      };
+      add_member_to_group_by_id: {
+        Args: { p_group_id: string; p_user_id: string };
+        Returns: undefined;
       };
       respond_to_shared_expense: {
         Args: { p_participant_id: string; p_status: string };

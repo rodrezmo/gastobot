@@ -74,7 +74,7 @@ export function GroupDetailPage() {
     setAddMemberError('');
     setAddingMember(true);
     try {
-      await addMember(selectedUser.email);
+      await addMember(selectedUser.id);
     } catch (err) {
       setAddMemberError(err instanceof Error ? err.message : 'Error al agregar miembro');
     } finally {
