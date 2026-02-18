@@ -74,7 +74,8 @@ export function SplitMethodSelector({
           {participants.map((p) => (
             <div key={p.id} className="flex items-center justify-between gap-3">
               <span className="text-sm text-gray-700 dark:text-gray-300">
-                {p.full_name || p.email}
+                @{p.nickname}
+                {p.full_name ? ` · ${p.full_name}` : ''}
               </span>
               {method === 'equal' ? (
                 <span className="text-sm font-medium text-gray-900 dark:text-gray-100">

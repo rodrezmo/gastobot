@@ -38,7 +38,7 @@ export function CreateGroupPage() {
       await createGroup({
         name: name.trim(),
         description: description.trim() || undefined,
-        member_emails: members.map((m) => m.email),
+        member_ids: members.map((m) => m.id),
         currency,
       });
       navigate('/shared');
@@ -113,13 +113,16 @@ export function CreateGroupPage() {
                   >
                     <div className="flex items-center gap-2">
                       <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-100 text-xs font-medium text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">
-                        {(m.full_name || m.email).charAt(0).toUpperCase()}
+                        {(m.full_name || m.nickname).charAt(0).toUpperCase()}
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          {m.full_name || m.email}
+                          @{m.nickname}
+                          {m.full_name ? (
+                            <span className="ml-1 font-normal text-gray-500">· {m.full_name}</span>
+                          ) : null}
                         </p>
-                        <p className="text-xs text-gray-500">{m.email}</p>
+                        <p className="text-xs text-gray-500">{m.masked_email}</p>
                       </div>
                     </div>
                     <button

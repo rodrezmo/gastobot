@@ -6,9 +6,9 @@ import type {
   UserSearchResult,
 } from '@/types/shared.ts';
 
-export async function searchUsersByEmail(email: string): Promise<UserSearchResult[]> {
-  const { data, error } = await supabase.rpc('search_users_by_email', {
-    search_email: email,
+export async function searchUsersByNickname(query: string): Promise<UserSearchResult[]> {
+  const { data, error } = await supabase.rpc('search_users_by_nickname', {
+    search_query: query,
   });
   if (error) throw error;
   return (data as UserSearchResult[]) ?? [];

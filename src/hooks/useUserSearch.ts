@@ -1,14 +1,24 @@
 import { useState, useEffect } from 'react';
-import { searchUsersByEmail } from '@/services/sharedService.ts';
+import { searchUsersByNickname } from '@/services/sharedService.ts';
+import { getMyContacts } from '@/services/contactsService.ts';
 import type { UserSearchResult } from '@/types/shared.ts';
 
 export function useUserSearch() {
   const [query, setQuery] = useState('');
+  const [contacts, setContacts] = useState<UserSearchResult[]>([]);
   const [results, setResults] = useState<UserSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Load saved contacts on mount
   useEffect(() => {
-    if (query.length < 3) {
+    getMyContacts()
+      .then(setContacts)
+      .catch(() => setContacts([]));
+  }, []);
+
+  // Search by nickname when query >= 2 chars
+  useEffect(() => {
+    if (query.length < 2) {
       setResults([]);
       return;
     }
@@ -16,7 +26,7 @@ export function useUserSearch() {
     const timeout = setTimeout(async () => {
       setLoading(true);
       try {
-        const users = await searchUsersByEmail(query);
+        const users = await searchUsersByNickname(query);
         setResults(users);
       } catch {
         setResults([]);
@@ -27,5 +37,5 @@ export function useUserSearch() {
     return () => clearTimeout(timeout);
   }, [query]);
 
-  return { query, setQuery, results, loading };
+  return { query, setQuery, contacts, results, loading };
 }

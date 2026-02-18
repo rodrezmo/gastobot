@@ -162,7 +162,8 @@ export function ShareTransactionModal({ transaction, open, onClose }: ShareTrans
                     &times;
                   </button>
                   <span className="truncate text-sm text-gray-700 dark:text-gray-300">
-                    {f.full_name || f.email}
+                    @{f.nickname}
+                    {f.full_name ? ` · ${f.full_name}` : ''}
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
