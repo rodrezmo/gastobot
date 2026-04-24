@@ -1,9 +1,13 @@
-import type { Profile, Category, TransactionWithCategory } from './database.ts';
+import type { Profile, Category, TransactionWithCategory, BudgetWithCategory, SavingsSummary, SavingsGoalWithStats } from './database.ts';
 import type {
   CreateTransactionParams,
   UpdateTransactionParams,
   CreateCategoryParams,
   TransactionFilters,
+  UpsertBudgetParams,
+  BudgetSummaryItem,
+  UpsertSavingsGoalParams,
+  RecordSavingsParams,
 } from './api.ts';
 
 export interface Session {
@@ -39,6 +43,33 @@ export interface CategoryState {
   addCategory: (params: CreateCategoryParams) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
 }
+
+export interface BudgetState {
+  budgets: BudgetWithCategory[];
+  summary: BudgetSummaryItem[];
+  loading: boolean;
+  fetchBudgets: () => Promise<void>;
+  fetchSummary: (month: Date) => Promise<void>;
+  upsertBudget: (params: UpsertBudgetParams) => Promise<void>;
+  deleteBudget: (id: string) => Promise<void>;
+}
+
+export interface SavingsState {
+  totalSaved: number;
+  totalSavedArs: number;
+  totalSavedUsd: number;
+  monthlyAvg: number;
+  goals: SavingsGoalWithStats[];
+  loading: boolean;
+  error: string | null;
+  fetchSummary: () => Promise<void>;
+  upsertGoal: (params: UpsertSavingsGoalParams) => Promise<void>;
+  deleteGoal: (id: string) => Promise<void>;
+  recordSavings: (params: RecordSavingsParams) => Promise<void>;
+}
+
+// Re-export to avoid importing from two places
+export type { SavingsSummary };
 
 export interface UIState {
   theme: 'light' | 'dark';

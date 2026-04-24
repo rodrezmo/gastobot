@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Share2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { Share2, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/Button.tsx';
 import { Input } from '@/components/ui/Input.tsx';
 import { Select } from '@/components/ui/Select.tsx';
@@ -35,6 +36,10 @@ export function TransactionForm({ initialValues, onSubmit, submitLabel, isEdit }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Installments state
+  const [installmentsEnabled, setInstallmentsEnabled] = useState(false);
+  const [installmentsTotal, setInstallmentsTotal] = useState(3);
+
   // Share state
   const [shareEnabled, setShareEnabled] = useState(false);
   const [friends, setFriends] = useState<UserSearchResult[]>([]);
@@ -42,6 +47,10 @@ export function TransactionForm({ initialValues, onSubmit, submitLabel, isEdit }
 
   const filteredCategories = categories.filter((c) => c.type === type);
   const parsedAmount = parseFloat(amount) || 0;
+
+  const monthlyAmount = installmentsEnabled && installmentsTotal > 1
+    ? Math.round((parsedAmount / installmentsTotal) * 100) / 100
+    : parsedAmount;
   const totalFriendPct = Array.from(friendPcts.values()).reduce((a, b) => a + b, 0);
   const ownerPct = Math.max(0, Math.round((100 - totalFriendPct) * 100) / 100);
 
@@ -85,6 +94,7 @@ export function TransactionForm({ initialValues, onSubmit, submitLabel, isEdit }
         type,
         description: description || undefined,
         date,
+        installments_total: installmentsEnabled && type === 'expense' && installmentsTotal > 1 ? installmentsTotal : 1,
       });
 
       // If sharing, create the shared transaction record
@@ -118,9 +128,11 @@ export function TransactionForm({ initialValues, onSubmit, submitLabel, isEdit }
         }
       }
 
+      toast.success('Transacción registrada');
       navigate('/transactions');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al guardar');
+      toast.error('Ocurrió un error, intentá de nuevo');
     } finally {
       setLoading(false);
     }
@@ -138,10 +150,10 @@ export function TransactionForm({ initialValues, onSubmit, submitLabel, isEdit }
         <button
           type="button"
           onClick={() => setType('expense')}
-          className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors ${
+          className={`flex-1 rounded-xl py-2 text-sm font-medium transition-colors ${
             type === 'expense'
-              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-              : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
+              ? 'bg-gradient-to-r from-red-600 to-red-500 font-bold text-white'
+              : 'border border-slate-600 text-slate-400'
           }`}
         >
           Gasto
@@ -149,42 +161,48 @@ export function TransactionForm({ initialValues, onSubmit, submitLabel, isEdit }
         <button
           type="button"
           onClick={() => setType('income')}
-          className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors ${
+          className={`flex-1 rounded-xl py-2 text-sm font-medium transition-colors ${
             type === 'income'
-              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-              : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
+              ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 font-bold text-white'
+              : 'border border-slate-600 text-slate-400'
           }`}
         >
           Ingreso
         </button>
       </div>
 
-      <Input
-        label="Monto"
-        type="number"
-        step="0.01"
-        min="0.01"
-        placeholder="0.00"
-        value={amount}
-        onChange={(e) => setAmount(e.target.value)}
-        required
-      />
+      <div>
+        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Monto</label>
+        <div className="relative">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">$</span>
+          <input
+            type="number"
+            step="0.01"
+            min="0.01"
+            placeholder="0.00"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            required
+            className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-7 pr-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+          />
+        </div>
+      </div>
 
       <Select
-        label="Categoria"
+        label="Categoría"
         value={categoryId}
         onChange={(e) => setCategoryId(e.target.value)}
         options={[
-          { value: '', label: 'Seleccionar categoria...' },
+          { value: '', label: 'Seleccionar categoría...' },
           ...filteredCategories.map((c) => ({ value: c.id, label: c.name })),
         ]}
         required
       />
 
       <Input
-        label="Descripcion"
+        label="Descripción"
         type="text"
-        placeholder="Descripcion opcional"
+        placeholder="Descripción opcional"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
       />
@@ -196,6 +214,49 @@ export function TransactionForm({ initialValues, onSubmit, submitLabel, isEdit }
         onChange={(e) => setDate(e.target.value)}
         required
       />
+
+      {/* Installments toggle - solo para gastos nuevos */}
+      {!isEdit && type === 'expense' && (
+        <div className="space-y-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+          <button
+            type="button"
+            onClick={() => setInstallmentsEnabled(!installmentsEnabled)}
+            className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              installmentsEnabled
+                ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+                : 'bg-gray-50 text-gray-600 dark:bg-gray-700/50 dark:text-gray-400'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Pagar en cuotas
+            </span>
+            <span className="text-xs">{installmentsEnabled ? 'Activado' : 'Desactivado'}</span>
+          </button>
+
+          {installmentsEnabled && (
+            <div className="space-y-2">
+              <Input
+                label="Cantidad de cuotas"
+                type="number"
+                min={2}
+                max={48}
+                value={installmentsTotal}
+                onChange={(e) => setInstallmentsTotal(Math.max(2, Math.min(48, parseInt(e.target.value) || 2)))}
+              />
+              {parsedAmount > 0 && (
+                <div className="rounded-lg bg-blue-50 px-3 py-2 dark:bg-blue-900/20">
+                  <p className="text-xs text-blue-700 dark:text-blue-400">
+                    Cuota mensual:{' '}
+                    <span className="font-bold">{formatCurrency(monthlyAmount)}</span>
+                    {' '}× {installmentsTotal} meses
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Share toggle - only for new expenses */}
       {!isEdit && type === 'expense' && (

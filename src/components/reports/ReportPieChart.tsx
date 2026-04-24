@@ -17,14 +17,14 @@ export function ReportPieChart({ data }: ReportPieChartProps) {
 
   if (chartData.length === 0) {
     return (
-      <Card title="Gastos por categoria">
+      <Card title="Gastos por categoría">
         <p className="py-8 text-center text-sm text-gray-500">Sin datos</p>
       </Card>
     );
   }
 
   return (
-    <Card title="Gastos por categoria">
+    <Card title="Gastos por categoría">
       <ResponsiveContainer width="100%" height={300}>
         <PieChart>
           <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100}>

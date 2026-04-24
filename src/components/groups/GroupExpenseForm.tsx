@@ -39,7 +39,7 @@ export function GroupExpenseForm({ groupId, onSubmit }: GroupExpenseFormProps) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
       <Input
-        label="Descripcion"
+        label="Descripción"
         placeholder="Ej: Supermercado..."
         value={description}
         onChange={(e) => setDescription(e.target.value)}

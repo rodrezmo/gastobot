@@ -21,7 +21,7 @@ export async function createSharedTransaction(
     p_transaction_id: params.transaction_id,
     p_split_method: params.split_method,
     p_total_amount: params.participants.reduce((sum, p) => sum + p.amount, 0),
-    p_note: params.note ?? null,
+    p_note: (params.note ?? '') as string,
     p_participants: params.participants.map((p) => ({
       user_id: p.user_id,
       amount: p.amount,

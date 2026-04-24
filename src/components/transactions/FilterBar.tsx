@@ -15,13 +15,13 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
       <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <input
           type="text"
           placeholder="Buscar transacciones..."
           value={filters.search ?? ''}
           onChange={(e) => onChange({ ...filters, search: e.target.value || undefined })}
-          className="block w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-3 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+          className="block w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-10 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
         />
       </div>
 
@@ -46,7 +46,7 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
           onChange({ ...filters, category_id: e.target.value || undefined })
         }
         options={[
-          { value: '', label: 'Todas las categorias' },
+          { value: '', label: 'Todas las categorías' },
           ...categories.map((c) => ({ value: c.id, label: c.name })),
         ]}
       />

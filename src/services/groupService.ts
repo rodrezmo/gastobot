@@ -15,7 +15,7 @@ export async function createGroup(params: CreateGroupParams): Promise<Group> {
   // Uses SECURITY DEFINER RPC to avoid self-referential RLS on group_members
   const { data: groupId, error } = await supabase.rpc('create_group_with_member_ids', {
     p_name: params.name,
-    p_description: params.description ?? null,
+    p_description: (params.description ?? '') as string,
     p_member_ids: params.member_ids,
     p_currency: params.currency ?? 'ARS',
   });

@@ -41,13 +41,46 @@ export async function createTransaction(params: CreateTransactionParams) {
   } = await supabase.auth.getSession();
   if (!session) throw new Error('Not authenticated');
 
+  const installments = params.installments_total && params.installments_total > 1 ? params.installments_total : 1;
+
+  if (installments === 1) {
+    const { data, error } = await supabase
+      .from('transactions')
+      .insert({ ...params, installments_total: 1, installment_number: 1, user_id: session.user.id })
+      .select('*, category:categories(*)')
+      .single();
+    if (error) throw error;
+    return data as TransactionWithCategory;
+  }
+
+  // Para cuotas: crear N filas, una por cuota
+  const monthlyAmount = Math.round((params.amount / installments) * 100) / 100;
+  const baseDate = new Date(params.date + 'T12:00:00');
+
+  const rows = Array.from({ length: installments }, (_, i) => {
+    const d = new Date(baseDate);
+    d.setMonth(d.getMonth() + i);
+    return {
+      category_id: params.category_id,
+      amount: monthlyAmount,
+      type: params.type,
+      currency: params.currency ?? 'ARS',
+      description: params.description,
+      date: d.toISOString().split('T')[0],
+      installments_total: installments,
+      installment_number: i + 1,
+      user_id: session.user.id,
+    };
+  });
+
   const { data, error } = await supabase
     .from('transactions')
-    .insert({ ...params, user_id: session.user.id })
+    .insert(rows)
     .select('*, category:categories(*)')
-    .single();
+    .order('installment_number', { ascending: true });
   if (error) throw error;
-  return data as TransactionWithCategory;
+  // Devolver la primera cuota como representante
+  return (data as TransactionWithCategory[])[0];
 }
 
 export async function updateTransaction(id: string, params: UpdateTransactionParams) {

@@ -31,7 +31,7 @@ export function TransactionFormPage() {
   return (
     <div className="mx-auto max-w-lg space-y-4">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-        {isEdit ? 'Editar transaccion' : 'Nueva transaccion'}
+        {isEdit ? 'Editar transacción' : 'Nueva transacción'}
       </h1>
       <Card>
         <TransactionForm
@@ -53,7 +53,7 @@ export function TransactionFormPage() {
               await addTransaction(params);
             }
           }}
-          submitLabel={isEdit ? 'Guardar cambios' : 'Agregar transaccion'}
+          submitLabel={isEdit ? 'Guardar cambios' : 'Agregar transacción'}
           isEdit={isEdit}
         />
       </Card>

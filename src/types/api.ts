@@ -4,8 +4,19 @@ export interface CreateTransactionParams {
   category_id: string;
   amount: number;
   type: TransactionType;
+  currency?: string;
   description?: string;
   date: string;
+  installments_total?: number;
+}
+
+export interface RecordSavingsParams {
+  currency: 'ARS' | 'USD';
+  amount: number;
+  date: string;
+  description?: string;
+  // Solo si currency=USD: cuántos ARS usaste para comprarlo
+  ars_cost?: number;
 }
 
 export type UpdateTransactionParams = Partial<CreateTransactionParams>;
@@ -23,6 +34,28 @@ export interface TransactionFilters {
   date_from?: string;
   date_to?: string;
   search?: string;
+}
+
+export interface UpsertBudgetParams {
+  category_id: string;
+  amount: number;
+}
+
+export interface BudgetSummaryItem {
+  budget_id: string;
+  category_id: string;
+  category_name: string;
+  category_color: string;
+  limit_amount: number;
+  spent_amount: number;
+  percentage: number;
+}
+
+export interface UpsertSavingsGoalParams {
+  id?: string;
+  name: string;
+  target_amount?: number | null;
+  target_date?: string | null;
 }
 
 export interface ReportData {

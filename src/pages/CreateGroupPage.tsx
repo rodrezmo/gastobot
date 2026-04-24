@@ -72,7 +72,7 @@ export function CreateGroupPage() {
           />
 
           <Input
-            label="Descripcion (opcional)"
+            label="Descripción (opcional)"
             placeholder="Ej: Gastos del viaje de enero..."
             value={description}
             onChange={(e) => setDescription(e.target.value)}

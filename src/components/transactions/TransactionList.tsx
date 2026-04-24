@@ -22,7 +22,7 @@ export function TransactionList({ transactions, loading, onDelete }: Transaction
         icon={ArrowLeftRight}
         title="Sin transacciones"
         description="No se encontraron transacciones con los filtros actuales"
-        actionLabel="Nueva transaccion"
+        actionLabel="Nueva transacción"
         onAction={() => navigate('/transactions/new')}
       />
     );

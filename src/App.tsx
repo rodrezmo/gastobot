@@ -15,6 +15,8 @@ import { SettingsPage } from '@/pages/SettingsPage.tsx';
 import { SharedPage } from '@/pages/SharedPage.tsx';
 import { CreateGroupPage } from '@/pages/CreateGroupPage.tsx';
 import { GroupDetailPage } from '@/pages/GroupDetailPage.tsx';
+import { BudgetPage } from '@/pages/BudgetPage.tsx';
+import { SavingsPage } from '@/pages/SavingsPage.tsx';
 
 function App() {
   const { initialize } = useAuthStore();
@@ -50,6 +52,8 @@ function App() {
           <Route path="/transactions/new" element={<TransactionFormPage />} />
           <Route path="/transactions/:id/edit" element={<TransactionFormPage />} />
           <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/budget" element={<BudgetPage />} />
+          <Route path="/savings" element={<SavingsPage />} />
           <Route path="/shared" element={<SharedPage />} />
           <Route path="/shared/groups/new" element={<CreateGroupPage />} />
           <Route path="/shared/groups/:id" element={<GroupDetailPage />} />

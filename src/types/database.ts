@@ -29,9 +29,12 @@ export interface Transaction {
   category_id: string;
   amount: number;
   type: TransactionType;
+  currency: string;
   description: string | null;
   date: string;
   created_at: string;
+  installments_total: number;
+  installment_number: number;
 }
 
 export interface TransactionWithCategory extends Transaction {
@@ -47,4 +50,33 @@ export interface Budget {
   start_date: string;
   end_date: string | null;
   created_at: string;
+  updated_at: string;
+}
+
+export interface BudgetWithCategory extends Budget {
+  category: Category;
+}
+
+export interface SavingsGoal {
+  id: string;
+  user_id: string;
+  name: string;
+  target_amount: number | null;
+  target_date: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SavingsGoalWithStats extends SavingsGoal {
+  percentage: number | null;
+  monthly_avg: number;
+  months_to_goal: number | null;
+}
+
+export interface SavingsSummary {
+  total_saved: number;
+  total_ars: number;
+  total_usd: number;
+  monthly_avg: number;
+  goals: SavingsGoalWithStats[];
 }
