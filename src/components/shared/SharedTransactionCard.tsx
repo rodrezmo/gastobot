@@ -5,12 +5,13 @@ import type { SharedTransactionWithDetails } from '@/types/shared.ts';
 
 interface SharedTransactionCardProps {
   shared: SharedTransactionWithDetails;
+  currency?: string;
 }
 
 const statusConfig = {
-  pending: { label: 'Pendiente', color: '#f59e0b' },
-  accepted: { label: 'Aceptado', color: '#10b981' },
-  rejected: { label: 'Rechazado', color: '#ef4444' },
+  pending: { label: 'Pendiente', color: '#FFA502' },
+  accepted: { label: 'Aceptado', color: '#2ED573' },
+  rejected: { label: 'Rechazado', color: '#FF4757' },
 };
 
 const methodLabels = {
@@ -19,36 +20,45 @@ const methodLabels = {
   percentage: 'Porcentaje',
 };
 
-export function SharedTransactionCard({ shared }: SharedTransactionCardProps) {
+export function SharedTransactionCard({
+  shared,
+  currency = 'ARS',
+}: SharedTransactionCardProps) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+    <div
+      className="rounded-[14px] border p-4"
+      style={{
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        borderColor: 'var(--color-border)',
+      }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-white">
             {shared.transaction?.description ?? 'Gasto compartido'}
           </p>
-          <p className="text-xs text-gray-500">{formatDate(shared.created_at)}</p>
+          <p className="mt-0.5 text-[11px] uppercase tracking-wider text-white/40">
+            {formatDate(shared.created_at)} · {methodLabels[shared.split_method]}
+          </p>
         </div>
-        <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
-          {formatCurrency(shared.total_amount)}
+        <span className="shrink-0 text-sm font-bold tabular-nums text-white">
+          {formatCurrency(shared.total_amount, currency)}
         </span>
       </div>
 
-      <p className="mt-1 text-xs text-gray-500">{methodLabels[shared.split_method]}</p>
-
       {shared.note && (
-        <p className="mt-1 text-xs italic text-gray-400">{shared.note}</p>
+        <p className="mt-2 text-xs italic text-white/50">{shared.note}</p>
       )}
 
-      <div className="mt-3 space-y-1">
+      <div className="mt-3 flex flex-col gap-1.5">
         {shared.participants.map((p) => (
-          <div key={p.id} className="flex items-center justify-between">
-            <span className="text-xs text-gray-600 dark:text-gray-400">
+          <div key={p.id} className="flex items-center justify-between gap-2">
+            <span className="min-w-0 truncate text-xs text-white/60">
               {p.user.full_name || p.user.email}
             </span>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-gray-900 dark:text-gray-100">
-                {formatCurrency(p.amount)}
+            <div className="flex shrink-0 items-center gap-2">
+              <span className="text-xs font-medium tabular-nums text-white/80">
+                {formatCurrency(p.amount, currency)}
               </span>
               <Badge {...statusConfig[p.status]} />
             </div>

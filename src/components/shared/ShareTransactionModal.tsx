@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { X } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal.tsx';
 import { Button } from '@/components/ui/Button.tsx';
 import { Input } from '@/components/ui/Input.tsx';
@@ -16,25 +17,37 @@ interface ShareTransactionModalProps {
   onClose: () => void;
 }
 
-export function ShareTransactionModal({ transaction, open, onClose }: ShareTransactionModalProps) {
+export function ShareTransactionModal({
+  transaction,
+  open,
+  onClose,
+}: ShareTransactionModalProps) {
   const [friends, setFriends] = useState<UserSearchResult[]>([]);
-  const [friendPercentages, setFriendPercentages] = useState<Map<string, number>>(new Map());
+  const [friendPercentages, setFriendPercentages] = useState<
+    Map<string, number>
+  >(new Map());
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const createSharedTransaction = useSharedStore((s) => s.createSharedTransaction);
+  const createSharedTransaction = useSharedStore(
+    (s) => s.createSharedTransaction,
+  );
   const user = useAuthStore((s) => s.user);
+  const currency = user?.currency ?? 'ARS';
 
-  // Owner's percentage is always the remainder
-  const totalFriendPct = Array.from(friendPercentages.values()).reduce((a, b) => a + b, 0);
-  const ownerPct = Math.max(0, Math.round((100 - totalFriendPct) * 100) / 100);
+  const totalFriendPct = Array.from(friendPercentages.values()).reduce(
+    (a, b) => a + b,
+    0,
+  );
+  const ownerPct = Math.max(
+    0,
+    Math.round((100 - totalFriendPct) * 100) / 100,
+  );
 
   const handleAddFriend = (friend: UserSearchResult) => {
     if (friends.find((f) => f.id === friend.id)) return;
     const newFriends = [...friends, friend];
     setFriends(newFriends);
-
-    // Default: split equally among all (owner + friends)
     const pctEach = Math.round((100 / (newFriends.length + 1)) * 100) / 100;
     const newPcts = new Map<string, number>();
     for (const f of newFriends) newPcts.set(f.id, pctEach);
@@ -71,18 +84,18 @@ export function ShareTransactionModal({ transaction, open, onClose }: ShareTrans
     setError('');
     try {
       const participants = [
-        // Owner (me) with my percentage - auto-accepted by the RPC
         {
           user_id: user.id,
-          amount: Math.round((ownerPct / 100) * transaction.amount * 100) / 100,
+          amount:
+            Math.round((ownerPct / 100) * transaction.amount * 100) / 100,
           percentage: ownerPct,
         },
-        // Friends with their percentages
         ...friends.map((f) => {
           const pct = friendPercentages.get(f.id) || 0;
           return {
             user_id: f.id,
-            amount: Math.round((pct / 100) * transaction.amount * 100) / 100,
+            amount:
+              Math.round((pct / 100) * transaction.amount * 100) / 100,
             percentage: pct,
           };
         }),
@@ -105,98 +118,145 @@ export function ShareTransactionModal({ transaction, open, onClose }: ShareTrans
 
   return (
     <Modal open={open} onClose={onClose} title="Compartir gasto">
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         {/* Transaction summary */}
-        <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50">
-          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-            {transaction.description ?? transaction.category?.name ?? 'Gasto'}
+        <div
+          className="rounded-[14px] border p-3"
+          style={{
+            backgroundColor: 'rgba(255,255,255,0.03)',
+            borderColor: 'var(--color-border)',
+          }}
+        >
+          <p className="text-sm font-medium text-white">
+            {transaction.description ??
+              transaction.category?.name ??
+              'Gasto'}
           </p>
           <div className="mt-1 flex items-center justify-between">
-            <span className="text-xs text-gray-500">{formatDate(transaction.date)}</span>
-            <span className="text-sm font-bold text-red-600">
-              {formatCurrency(transaction.amount)}
+            <span className="text-[11px] uppercase tracking-wider text-white/40">
+              {formatDate(transaction.date)}
+            </span>
+            <span
+              className="text-sm font-bold tabular-nums"
+              style={{ color: 'var(--color-red)' }}
+            >
+              {formatCurrency(transaction.amount, currency)}
             </span>
           </div>
         </div>
 
         {/* Friend search */}
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-white/50">
             Compartir con
           </label>
           <FriendSearch
             onSelect={handleAddFriend}
-            excludeIds={[...(user ? [user.id] : []), ...friends.map((f) => f.id)]}
+            excludeIds={[
+              ...(user ? [user.id] : []),
+              ...friends.map((f) => f.id),
+            ]}
           />
         </div>
 
         {/* Split breakdown */}
         {friends.length > 0 && (
-          <div className="space-y-3">
-            <p className="text-xs font-medium uppercase text-gray-500">Division</p>
+          <div className="flex flex-col gap-2">
+            <p className="text-[10px] font-medium uppercase tracking-widest text-white/40">
+              División
+            </p>
 
-            {/* Owner (me) - auto calculated */}
-            <div className="flex items-center justify-between gap-3 rounded-lg bg-primary-50 px-3 py-2 dark:bg-primary-900/20">
-              <span className="text-sm font-medium text-primary-700 dark:text-primary-400">
+            {/* Owner */}
+            <div
+              className="flex items-center justify-between gap-3 rounded-[12px] px-3 py-2"
+              style={{
+                backgroundColor: 'rgba(255,107,74,0.10)',
+                border: '1px solid rgba(255,107,74,0.22)',
+              }}
+            >
+              <span className="truncate text-sm font-medium text-white">
                 Yo ({user?.full_name || user?.email})
               </span>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-primary-700 dark:text-primary-400">
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="text-sm font-bold text-white">
                   {ownerPct}%
                 </span>
-                <span className="text-xs text-gray-500">
-                  ({formatCurrency(Math.round((ownerPct / 100) * transaction.amount * 100) / 100)})
+                <span className="text-xs text-white/50">
+                  (
+                  {formatCurrency(
+                    Math.round((ownerPct / 100) * transaction.amount * 100) /
+                      100,
+                    currency,
+                  )}
+                  )
                 </span>
               </div>
             </div>
 
-            {/* Friends - editable */}
             {friends.map((f) => (
-              <div key={f.id} className="flex items-center justify-between gap-2">
-                <div className="flex min-w-0 flex-1 items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveFriend(f.id)}
-                    className="shrink-0 text-gray-400 hover:text-red-500"
-                  >
-                    &times;
-                  </button>
-                  <span className="truncate text-sm text-gray-700 dark:text-gray-300">
-                    @{f.nickname}
-                    {f.full_name ? ` · ${f.full_name}` : ''}
-                  </span>
-                </div>
+              <div
+                key={f.id}
+                className="flex items-center gap-2 rounded-[12px] border border-white/10 bg-white/[0.03] px-2 py-1.5"
+              >
+                <button
+                  type="button"
+                  onClick={() => handleRemoveFriend(f.id)}
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white/40 transition-colors hover:bg-white/10 hover:text-[color:var(--color-red)]"
+                  aria-label="Quitar"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+                <span className="min-w-0 flex-1 truncate text-xs text-white/80">
+                  @{f.nickname}
+                  {f.full_name ? (
+                    <span className="text-white/40"> · {f.full_name}</span>
+                  ) : null}
+                </span>
                 <div className="flex items-center gap-1">
-                  <Input
+                  <input
                     type="number"
                     min={0}
                     max={100}
                     step={1}
                     value={friendPercentages.get(f.id) ?? 0}
-                    onChange={(e) => handlePctChange(f.id, parseFloat(e.target.value) || 0)}
-                    className="w-20 text-right"
+                    onChange={(e) =>
+                      handlePctChange(f.id, parseFloat(e.target.value) || 0)
+                    }
+                    className="h-8 w-16 rounded-[10px] border border-white/10 bg-white/[0.04] px-2 text-right text-xs text-white focus:border-white/20 focus:outline-none"
                   />
-                  <span className="text-sm text-gray-500">%</span>
+                  <span className="text-xs text-white/40">%</span>
                 </div>
               </div>
             ))}
 
-            {/* Total validation */}
-            <p className={`text-xs ${totalFriendPct > 100 ? 'text-red-500' : 'text-green-600'}`}>
+            <p
+              className="text-xs"
+              style={{
+                color:
+                  totalFriendPct > 100
+                    ? 'var(--color-red)'
+                    : 'var(--color-green)',
+              }}
+            >
               Total: {(totalFriendPct + ownerPct).toFixed(1)}%
-              {totalFriendPct > 100 && ' - Excede el 100%'}
+              {totalFriendPct > 100 && ' · excede el 100%'}
             </p>
           </div>
         )}
 
-        {/* Error */}
         {error && (
-          <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
+          <div
+            className="rounded-[14px] border px-3 py-2.5 text-sm"
+            style={{
+              backgroundColor: 'rgba(255,71,87,0.08)',
+              borderColor: 'rgba(255,71,87,0.2)',
+              color: 'var(--color-red)',
+            }}
+          >
             {error}
           </div>
         )}
 
-        {/* Note */}
         <Input
           label="Nota (opcional)"
           placeholder="Ej: Cena del viernes..."
@@ -204,12 +264,11 @@ export function ShareTransactionModal({ transaction, open, onClose }: ShareTrans
           onChange={(e) => setNote(e.target.value)}
         />
 
-        {/* Submit */}
         <Button
-          onClick={handleSubmit}
+          onClick={() => void handleSubmit()}
           loading={submitting}
           disabled={friends.length === 0 || totalFriendPct > 100}
-          className="w-full"
+          fullWidth
         >
           Compartir
         </Button>

@@ -7,17 +7,25 @@ import type { SharedTransactionWithDetails } from '@/types/shared.ts';
 
 interface SharedNotificationListProps {
   expenses: SharedTransactionWithDetails[];
-  onRespond: (participantId: string, status: 'accepted' | 'rejected') => Promise<void>;
+  onRespond: (
+    participantId: string,
+    status: 'accepted' | 'rejected',
+  ) => Promise<void>;
   currentUserId?: string;
+  currency?: string;
 }
 
 export function SharedNotificationList({
   expenses,
   onRespond,
+  currency = 'ARS',
 }: SharedNotificationListProps) {
   const [respondingId, setRespondingId] = useState<string | null>(null);
 
-  const handleRespond = async (participantId: string, status: 'accepted' | 'rejected') => {
+  const handleRespond = async (
+    participantId: string,
+    status: 'accepted' | 'rejected',
+  ) => {
     setRespondingId(participantId);
     try {
       await onRespond(participantId, status);
@@ -29,40 +37,50 @@ export function SharedNotificationList({
   if (expenses.length === 0) return null;
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       {expenses.map((shared) => {
-        const myParticipation = shared.participants.find(
-          (p) => p.status === 'pending',
-        ) ?? shared.participants[0];
+        const myParticipation =
+          shared.participants.find((p) => p.status === 'pending') ??
+          shared.participants[0];
         if (!myParticipation) return null;
 
         return (
           <div
             key={shared.id}
-            className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20"
+            className="rounded-[14px] border p-4"
+            style={{
+              backgroundColor: 'rgba(255,165,2,0.08)',
+              borderColor: 'rgba(255,165,2,0.22)',
+            }}
           >
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {shared.owner.full_name || shared.owner.email} te compartio un gasto
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-white">
+                  {shared.owner.full_name || shared.owner.email} te compartió
+                  un gasto
                 </p>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  {shared.transaction?.description ?? 'Gasto'} - {formatDate(shared.created_at)}
+                <p className="mt-0.5 truncate text-xs text-white/50">
+                  {shared.transaction?.description ?? 'Gasto'} ·{' '}
+                  {formatDate(shared.created_at)}
                 </p>
               </div>
-              <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                {formatCurrency(myParticipation.amount)}
+              <span className="shrink-0 text-sm font-bold tabular-nums text-white">
+                {formatCurrency(myParticipation.amount, currency)}
               </span>
             </div>
 
             {shared.note && (
-              <p className="mt-1 text-xs italic text-gray-500">{shared.note}</p>
+              <p className="mt-2 text-xs italic text-white/50">
+                {shared.note}
+              </p>
             )}
 
             <div className="mt-3 flex gap-2">
               <Button
                 size="sm"
-                onClick={() => handleRespond(myParticipation.id, 'accepted')}
+                onClick={() =>
+                  handleRespond(myParticipation.id, 'accepted')
+                }
                 loading={respondingId === myParticipation.id}
                 disabled={respondingId !== null}
               >
@@ -72,7 +90,9 @@ export function SharedNotificationList({
               <Button
                 size="sm"
                 variant="danger"
-                onClick={() => handleRespond(myParticipation.id, 'rejected')}
+                onClick={() =>
+                  handleRespond(myParticipation.id, 'rejected')
+                }
                 loading={respondingId === myParticipation.id}
                 disabled={respondingId !== null}
               >

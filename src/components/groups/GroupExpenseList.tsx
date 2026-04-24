@@ -10,38 +10,49 @@ interface GroupExpenseListProps {
   onDelete?: (expenseId: string) => void;
 }
 
-export function GroupExpenseList({ expenses, currentUserId, currency = 'ARS', onDelete }: GroupExpenseListProps) {
+export function GroupExpenseList({
+  expenses,
+  currentUserId,
+  currency = 'ARS',
+  onDelete,
+}: GroupExpenseListProps) {
   if (expenses.length === 0) {
     return (
-      <p className="py-6 text-center text-sm text-gray-500">
-        No hay gastos registrados todavia.
+      <p className="py-8 text-center text-sm text-white/40">
+        No hay gastos registrados todavía.
       </p>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col gap-2">
       {expenses.map((expense) => (
         <div
           key={expense.id}
-          className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
+          className="flex items-center justify-between gap-3 rounded-[14px] border px-3 py-2.5"
+          style={{
+            backgroundColor: 'rgba(255,255,255,0.03)',
+            borderColor: 'var(--color-border)',
+          }}
         >
-          <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-white">
               {expense.description}
             </p>
-            <p className="text-xs text-gray-500">
-              {expense.payer.full_name || expense.payer.email} - {formatDate(expense.date)}
+            <p className="mt-0.5 truncate text-[11px] uppercase tracking-wider text-white/40">
+              {expense.payer.full_name || expense.payer.email} ·{' '}
+              {formatDate(expense.date)}
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="text-sm font-bold tabular-nums text-white">
               {formatCurrency(Number(expense.amount), currency)}
             </span>
             {expense.paid_by === currentUserId && onDelete && (
               <button
                 onClick={() => onDelete(expense.id)}
-                className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+                className="flex h-8 w-8 items-center justify-center rounded-[10px] text-white/40 transition-colors hover:bg-white/5 hover:text-[color:var(--color-red)]"
+                aria-label="Eliminar"
               >
                 <Trash2 className="h-4 w-4" />
               </button>

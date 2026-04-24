@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlusCircle } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button.tsx';
 import { TransactionList } from '@/components/transactions/TransactionList.tsx';
 import { FilterBar } from '@/components/transactions/FilterBar.tsx';
@@ -9,8 +9,14 @@ import { useCategoryStore } from '@/stores/categoryStore.ts';
 
 export function TransactionListPage() {
   const navigate = useNavigate();
-  const { transactions, loading, filters, fetchTransactions, deleteTransaction, setFilters } =
-    useTransactionStore();
+  const {
+    transactions,
+    loading,
+    filters,
+    fetchTransactions,
+    deleteTransaction,
+    setFilters,
+  } = useTransactionStore();
   const { fetchCategories } = useCategoryStore();
 
   useEffect(() => {
@@ -22,17 +28,36 @@ export function TransactionListPage() {
     void fetchTransactions();
   }, [filters, fetchTransactions]);
 
+  const counts = useMemo(() => {
+    let income = 0;
+    let expense = 0;
+    for (const t of transactions) {
+      if (t.type === 'income') income++;
+      else expense++;
+    }
+    return { all: transactions.length, income, expense };
+  }, [transactions]);
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Transacciones</h1>
-        <Button onClick={() => navigate('/transactions/new')}>
-          <PlusCircle className="h-4 w-4" />
-          Nueva
+    <div className="mx-auto max-w-4xl space-y-5">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl text-white">Movimientos</h1>
+          <p className="mt-1 text-sm text-white/50">
+            {transactions.length} registros
+          </p>
+        </div>
+        <Button
+          onClick={() => navigate('/transactions/new')}
+          size="md"
+          className="shrink-0"
+        >
+          <Plus className="h-4 w-4" strokeWidth={2.5} />
+          <span className="hidden sm:inline">Nueva</span>
         </Button>
       </div>
 
-      <FilterBar filters={filters} onChange={setFilters} />
+      <FilterBar filters={filters} onChange={setFilters} counts={counts} />
 
       <TransactionList
         transactions={transactions}

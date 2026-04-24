@@ -37,9 +37,12 @@ export function GroupExpenseForm({ groupId, onSubmit }: GroupExpenseFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+    <form
+      onSubmit={(e) => void handleSubmit(e)}
+      className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_140px_160px_auto] sm:items-end"
+    >
       <Input
-        label="Descripcion"
+        label="Descripción"
         placeholder="Ej: Supermercado..."
         value={description}
         onChange={(e) => setDescription(e.target.value)}
@@ -62,7 +65,11 @@ export function GroupExpenseForm({ groupId, onSubmit }: GroupExpenseFormProps) {
         onChange={(e) => setDate(e.target.value)}
         required
       />
-      <Button type="submit" loading={submitting} disabled={!description || !amount}>
+      <Button
+        type="submit"
+        loading={submitting}
+        disabled={!description || !amount}
+      >
         <Plus className="h-4 w-4" />
         Agregar
       </Button>

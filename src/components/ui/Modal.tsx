@@ -1,14 +1,28 @@
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
+import { cn } from '@/utils/cn.ts';
 
 interface ModalProps {
   open: boolean;
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  size?: 'sm' | 'md' | 'lg';
 }
 
-export function Modal({ open, onClose, title, children }: ModalProps) {
+const sizeMap: Record<NonNullable<ModalProps['size']>, string> = {
+  sm: 'max-w-sm',
+  md: 'max-w-lg',
+  lg: 'max-w-2xl',
+};
+
+export function Modal({
+  open,
+  onClose,
+  title,
+  children,
+  size = 'md',
+}: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -27,18 +41,33 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
     <dialog
       ref={dialogRef}
       onClose={onClose}
-      className="fixed inset-0 z-50 m-auto max-w-lg rounded-xl border-0 bg-white p-0 shadow-xl backdrop:bg-black/50 dark:bg-gray-800"
+      className={cn(
+        'fixed inset-0 z-50 m-auto w-full border-0 bg-transparent p-0 backdrop:bg-black/70 backdrop:backdrop-blur-sm',
+        sizeMap[size],
+      )}
     >
-      <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
-        <button
-          onClick={onClose}
-          className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"
+      <div
+        className="shadow-card overflow-hidden rounded-[20px] border"
+        style={{
+          backgroundColor: 'var(--color-surface)',
+          borderColor: 'var(--color-border)',
+        }}
+      >
+        <div
+          className="flex items-center justify-between border-b px-5 py-4"
+          style={{ borderColor: 'var(--color-border)' }}
         >
-          <X className="h-5 w-5" />
-        </button>
+          <h2 className="font-display text-lg text-white">{title}</h2>
+          <button
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="flex h-8 w-8 items-center justify-center rounded-[10px] text-white/50 transition-colors hover:bg-white/5 hover:text-white"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="px-5 py-5 text-white">{children}</div>
       </div>
-      <div className="px-6 py-4">{children}</div>
     </dialog>
   );
 }

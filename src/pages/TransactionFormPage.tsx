@@ -13,7 +13,9 @@ export function TransactionFormPage() {
   const isEdit = Boolean(id);
   const { addTransaction, updateTransaction } = useTransactionStore();
   const { fetchCategories } = useCategoryStore();
-  const [existing, setExisting] = useState<TransactionWithCategory | null>(null);
+  const [existing, setExisting] = useState<TransactionWithCategory | null>(
+    null,
+  );
   const [loading, setLoading] = useState(isEdit);
 
   useEffect(() => {
@@ -29,10 +31,18 @@ export function TransactionFormPage() {
   if (loading) return <Spinner className="py-12" />;
 
   return (
-    <div className="mx-auto max-w-lg space-y-4">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-        {isEdit ? 'Editar transaccion' : 'Nueva transaccion'}
-      </h1>
+    <div className="mx-auto max-w-lg space-y-6">
+      <div>
+        <h1 className="font-display text-3xl text-white">
+          {isEdit ? 'Editar transacción' : 'Nueva transacción'}
+        </h1>
+        <p className="mt-1 text-sm text-white/50">
+          {isEdit
+            ? 'Modificá los detalles de la transacción'
+            : 'Registrá un gasto o ingreso'}
+        </p>
+      </div>
+
       <Card>
         <TransactionForm
           initialValues={
@@ -53,7 +63,7 @@ export function TransactionFormPage() {
               await addTransaction(params);
             }
           }}
-          submitLabel={isEdit ? 'Guardar cambios' : 'Agregar transaccion'}
+          submitLabel={isEdit ? 'Guardar cambios' : 'Agregar transacción'}
           isEdit={isEdit}
         />
       </Card>

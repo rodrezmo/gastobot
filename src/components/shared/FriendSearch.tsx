@@ -1,3 +1,4 @@
+import { Search } from 'lucide-react';
 import { useUserSearch } from '@/hooks/useUserSearch.ts';
 import { saveContact } from '@/services/contactsService.ts';
 import { Input } from '@/components/ui/Input.tsx';
@@ -14,7 +15,13 @@ interface FriendSearchProps {
 function Avatar({ user }: { user: UserSearchResult }) {
   const initial = (user.full_name || user.nickname).charAt(0).toUpperCase();
   return (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-medium text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">
+    <div
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+      style={{
+        background: 'var(--grad-primary)',
+        boxShadow: 'var(--shadow-cta)',
+      }}
+    >
       {initial}
     </div>
   );
@@ -31,17 +38,19 @@ function UserRow({
     <button
       type="button"
       onClick={() => onClick(user)}
-      className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-700"
+      className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-white/[0.04]"
     >
       <Avatar user={user} />
-      <div>
-        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm text-white">
           @{user.nickname}
           {user.full_name ? (
-            <span className="ml-1 font-normal text-gray-500">· {user.full_name}</span>
+            <span className="ml-1 font-normal text-white/50">
+              · {user.full_name}
+            </span>
           ) : null}
         </p>
-        <p className="text-xs text-gray-500">{user.masked_email}</p>
+        <p className="truncate text-xs text-white/40">{user.masked_email}</p>
       </div>
     </button>
   );
@@ -58,7 +67,6 @@ export function FriendSearch({ onSelect, excludeIds = [] }: FriendSearchProps) {
   const handleSelect = (selected: UserSearchResult) => {
     onSelect(selected);
     setQuery('');
-    // Save to contacts silently (fire & forget)
     saveContact(selected.id).catch(() => {});
   };
 
@@ -75,25 +83,33 @@ export function FriendSearch({ onSelect, excludeIds = [] }: FriendSearchProps) {
         placeholder="Buscar por @nickname..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
+        leftSlot={<Search className="h-4 w-4" />}
+        rightSlot={loading ? <Spinner size="sm" /> : undefined}
       />
-      {loading && <Spinner size="sm" className="absolute right-3 top-2.5" />}
 
-      {/* Search results dropdown */}
       {showResults && (
-        <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+        <div
+          className="shadow-card absolute z-10 mt-1 w-full overflow-hidden rounded-[14px] border"
+          style={{
+            backgroundColor: 'var(--color-surface-2)',
+            borderColor: 'var(--color-border)',
+          }}
+        >
           {filteredResults.map((u) => (
             <UserRow key={u.id} user={u} onClick={handleSelect} />
           ))}
         </div>
       )}
 
-      {/* Contacts shown when not searching */}
       {showContacts && !isSearching && (
         <div className="mt-3">
-          <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
+          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-widest text-white/40">
             Mis contactos
           </p>
-          <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+          <div
+            className="overflow-hidden rounded-[14px] border"
+            style={{ borderColor: 'var(--color-border)' }}
+          >
             {filteredContacts.map((c) => (
               <UserRow key={c.id} user={c} onClick={handleSelect} />
             ))}
@@ -101,10 +117,17 @@ export function FriendSearch({ onSelect, excludeIds = [] }: FriendSearchProps) {
         </div>
       )}
 
-      {/* No results while searching */}
       {isSearching && !loading && filteredResults.length === 0 && (
-        <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-lg dark:border-gray-700 dark:bg-gray-800">
-          <p className="text-sm text-gray-500">No se encontraron usuarios con ese @nickname</p>
+        <div
+          className="shadow-card absolute z-10 mt-1 w-full rounded-[14px] border px-4 py-3"
+          style={{
+            backgroundColor: 'var(--color-surface-2)',
+            borderColor: 'var(--color-border)',
+          }}
+        >
+          <p className="text-sm text-white/50">
+            No se encontraron usuarios con ese @nickname
+          </p>
         </div>
       )}
     </div>
