@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Share2 } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, Share2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button.tsx';
 import { Input } from '@/components/ui/Input.tsx';
 import { Select } from '@/components/ui/Select.tsx';
@@ -10,6 +10,7 @@ import { useCategoryStore } from '@/stores/categoryStore.ts';
 import { useSharedStore } from '@/stores/sharedStore.ts';
 import { useAuthStore } from '@/stores/authStore.ts';
 import { formatCurrency } from '@/utils/formatCurrency.ts';
+import { cn } from '@/utils/cn.ts';
 import type { TransactionType } from '@/types/database.ts';
 import type { CreateTransactionParams } from '@/types/api.ts';
 import type { UserSearchResult } from '@/types/shared.ts';
@@ -21,29 +22,52 @@ interface TransactionFormProps {
   isEdit?: boolean;
 }
 
-export function TransactionForm({ initialValues, onSubmit, submitLabel, isEdit }: TransactionFormProps) {
+export function TransactionForm({
+  initialValues,
+  onSubmit,
+  submitLabel,
+  isEdit,
+}: TransactionFormProps) {
   const navigate = useNavigate();
   const { categories } = useCategoryStore();
-  const createSharedTransaction = useSharedStore((s) => s.createSharedTransaction);
+  const createSharedTransaction = useSharedStore(
+    (s) => s.createSharedTransaction,
+  );
   const user = useAuthStore((s) => s.user);
+  const currency = user?.currency ?? 'ARS';
 
-  const [type, setType] = useState<TransactionType>(initialValues?.type ?? 'expense');
-  const [categoryId, setCategoryId] = useState(initialValues?.category_id ?? '');
-  const [amount, setAmount] = useState(initialValues?.amount?.toString() ?? '');
-  const [description, setDescription] = useState(initialValues?.description ?? '');
-  const [date, setDate] = useState(initialValues?.date ?? new Date().toISOString().split('T')[0]);
+  const [type, setType] = useState<TransactionType>(
+    initialValues?.type ?? 'expense',
+  );
+  const [categoryId, setCategoryId] = useState(
+    initialValues?.category_id ?? '',
+  );
+  const [amount, setAmount] = useState(
+    initialValues?.amount?.toString() ?? '',
+  );
+  const [description, setDescription] = useState(
+    initialValues?.description ?? '',
+  );
+  const [date, setDate] = useState(
+    initialValues?.date ?? new Date().toISOString().split('T')[0],
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Share state
   const [shareEnabled, setShareEnabled] = useState(false);
   const [friends, setFriends] = useState<UserSearchResult[]>([]);
   const [friendPcts, setFriendPcts] = useState<Map<string, number>>(new Map());
 
   const filteredCategories = categories.filter((c) => c.type === type);
   const parsedAmount = parseFloat(amount) || 0;
-  const totalFriendPct = Array.from(friendPcts.values()).reduce((a, b) => a + b, 0);
-  const ownerPct = Math.max(0, Math.round((100 - totalFriendPct) * 100) / 100);
+  const totalFriendPct = Array.from(friendPcts.values()).reduce(
+    (a, b) => a + b,
+    0,
+  );
+  const ownerPct = Math.max(
+    0,
+    Math.round((100 - totalFriendPct) * 100) / 100,
+  );
 
   const handleAddFriend = (friend: UserSearchResult) => {
     if (friends.find((f) => f.id === friend.id)) return;
@@ -78,7 +102,6 @@ export function TransactionForm({ initialValues, onSubmit, submitLabel, isEdit }
         ? Math.round((ownerPct / 100) * parsedAmount * 100) / 100
         : parsedAmount;
 
-      // Create the transaction with owner's portion (or full amount if not sharing)
       await onSubmit({
         category_id: categoryId,
         amount: ownerAmount,
@@ -87,9 +110,10 @@ export function TransactionForm({ initialValues, onSubmit, submitLabel, isEdit }
         date,
       });
 
-      // If sharing, create the shared transaction record
       if (isSharing) {
-        const { useTransactionStore } = await import('@/stores/transactionStore.ts');
+        const { useTransactionStore } = await import(
+          '@/stores/transactionStore.ts'
+        );
         const transactions = useTransactionStore.getState().transactions;
         const latest = transactions[0];
 
@@ -104,7 +128,8 @@ export function TransactionForm({ initialValues, onSubmit, submitLabel, isEdit }
               const pct = friendPcts.get(f.id) || 0;
               return {
                 user_id: f.id,
-                amount: Math.round((pct / 100) * parsedAmount * 100) / 100,
+                amount:
+                  Math.round((pct / 100) * parsedAmount * 100) / 100,
                 percentage: pct,
               };
             }),
@@ -129,34 +154,34 @@ export function TransactionForm({ initialValues, onSubmit, submitLabel, isEdit }
   return (
     <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
       {error && (
-        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
+        <div
+          className="rounded-[14px] border px-3 py-2.5 text-sm"
+          style={{
+            backgroundColor: 'rgba(255,71,87,0.08)',
+            borderColor: 'rgba(255,71,87,0.2)',
+            color: 'var(--color-red)',
+          }}
+        >
           {error}
         </div>
       )}
 
-      <div className="flex gap-2">
-        <button
-          type="button"
+      {/* Tipo */}
+      <div className="grid grid-cols-2 gap-2 rounded-[14px] border border-white/10 bg-white/[0.02] p-1">
+        <TypeToggle
+          active={type === 'expense'}
           onClick={() => setType('expense')}
-          className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors ${
-            type === 'expense'
-              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-              : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
-          }`}
-        >
-          Gasto
-        </button>
-        <button
-          type="button"
+          icon={<ArrowUpRight className="h-4 w-4" />}
+          label="Gasto"
+          activeColor="var(--color-red)"
+        />
+        <TypeToggle
+          active={type === 'income'}
           onClick={() => setType('income')}
-          className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors ${
-            type === 'income'
-              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-              : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
-          }`}
-        >
-          Ingreso
-        </button>
+          icon={<ArrowDownLeft className="h-4 w-4" />}
+          label="Ingreso"
+          activeColor="var(--color-green)"
+        />
       </div>
 
       <Input
@@ -171,20 +196,23 @@ export function TransactionForm({ initialValues, onSubmit, submitLabel, isEdit }
       />
 
       <Select
-        label="Categoria"
+        label="Categoría"
         value={categoryId}
         onChange={(e) => setCategoryId(e.target.value)}
         options={[
-          { value: '', label: 'Seleccionar categoria...' },
-          ...filteredCategories.map((c) => ({ value: c.id, label: c.name })),
+          { value: '', label: 'Seleccionar categoría...' },
+          ...filteredCategories.map((c) => ({
+            value: c.id,
+            label: c.name,
+          })),
         ]}
         required
       />
 
       <Input
-        label="Descripcion"
+        label="Descripción"
         type="text"
-        placeholder="Descripcion opcional"
+        placeholder="Descripción opcional"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
       />
@@ -197,66 +225,97 @@ export function TransactionForm({ initialValues, onSubmit, submitLabel, isEdit }
         required
       />
 
-      {/* Share toggle - only for new expenses */}
       {!isEdit && type === 'expense' && (
-        <div className="space-y-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+        <div className="flex flex-col gap-3 rounded-[14px] border border-white/10 bg-white/[0.02] p-3">
           <button
             type="button"
             onClick={() => setShareEnabled(!shareEnabled)}
-            className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+            className={cn(
+              'flex w-full items-center justify-between rounded-[12px] px-3 py-2 text-sm font-medium transition-colors',
               shareEnabled
-                ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400'
-                : 'bg-gray-50 text-gray-600 dark:bg-gray-700/50 dark:text-gray-400'
-            }`}
+                ? 'text-white'
+                : 'text-white/60 hover:text-white/80',
+            )}
+            style={
+              shareEnabled
+                ? {
+                    background: 'var(--grad-primary)',
+                    boxShadow: 'var(--shadow-cta)',
+                  }
+                : { backgroundColor: 'rgba(255,255,255,0.04)' }
+            }
           >
             <span className="flex items-center gap-2">
               <Share2 className="h-4 w-4" />
               Compartir este gasto
             </span>
-            <span className="text-xs">{shareEnabled ? 'Activado' : 'Desactivado'}</span>
+            <span className="text-xs opacity-80">
+              {shareEnabled ? 'Activado' : 'Desactivado'}
+            </span>
           </button>
 
           {shareEnabled && (
-            <div className="space-y-3">
+            <div className="flex flex-col gap-3">
               {!user?.nickname ? (
                 <NicknameRequired />
               ) : (
                 <FriendSearch
                   onSelect={handleAddFriend}
-                  excludeIds={[...(user ? [user.id] : []), ...friends.map((f) => f.id)]}
+                  excludeIds={[
+                    ...(user ? [user.id] : []),
+                    ...friends.map((f) => f.id),
+                  ]}
                 />
               )}
 
               {friends.length > 0 && (
-                <div className="space-y-2">
+                <div className="flex flex-col gap-2">
                   {/* Owner */}
-                  <div className="flex items-center justify-between rounded-lg bg-primary-50 px-3 py-2 dark:bg-primary-900/20">
-                    <span className="text-xs font-medium text-primary-700 dark:text-primary-400">
-                      Yo
-                    </span>
-                    <span className="text-xs font-bold text-primary-700 dark:text-primary-400">
-                      {ownerPct}% ({formatCurrency(Math.round((ownerPct / 100) * parsedAmount * 100) / 100)})
+                  <div
+                    className="flex items-center justify-between rounded-[12px] px-3 py-2 text-xs"
+                    style={{
+                      backgroundColor: 'rgba(255,107,74,0.10)',
+                      border: '1px solid rgba(255,107,74,0.22)',
+                    }}
+                  >
+                    <span className="font-medium text-white">Yo</span>
+                    <span className="font-bold text-white tabular-nums">
+                      {ownerPct}% ·{' '}
+                      {formatCurrency(
+                        Math.round(
+                          (ownerPct / 100) * parsedAmount * 100,
+                        ) / 100,
+                        currency,
+                      )}
                     </span>
                   </div>
 
-                  {/* Friends */}
                   {friends.map((f) => (
-                    <div key={f.id} className="flex items-center justify-between gap-2">
-                      <div className="flex min-w-0 flex-1 items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveFriend(f.id)}
-                          className="shrink-0 text-gray-400 hover:text-red-500"
-                        >
-                          &times;
-                        </button>
-                        <span className="truncate text-xs text-gray-700 dark:text-gray-300">
+                    <div
+                      key={f.id}
+                      className="flex items-center gap-2 rounded-[12px] border border-white/10 bg-white/[0.03] px-2 py-1.5"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFriend(f.id)}
+                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white/40 transition-colors hover:bg-white/10 hover:text-[color:var(--color-red)]"
+                        aria-label="Quitar"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs text-white/80">
                           @{f.nickname}
-                          {f.full_name ? ` · ${f.full_name}` : ''}
-                        </span>
+                          {f.full_name ? (
+                            <span className="text-white/40">
+                              {' '}
+                              · {f.full_name}
+                            </span>
+                          ) : null}
+                        </p>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Input
+                        <input
                           type="number"
                           min={0}
                           max={100}
@@ -264,18 +323,30 @@ export function TransactionForm({ initialValues, onSubmit, submitLabel, isEdit }
                           value={friendPcts.get(f.id) ?? 0}
                           onChange={(e) => {
                             const newPcts = new Map(friendPcts);
-                            newPcts.set(f.id, Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)));
+                            newPcts.set(
+                              f.id,
+                              Math.max(
+                                0,
+                                Math.min(
+                                  100,
+                                  parseFloat(e.target.value) || 0,
+                                ),
+                              ),
+                            );
                             setFriendPcts(newPcts);
                           }}
-                          className="w-20 text-right"
+                          className="h-8 w-16 rounded-[10px] border border-white/10 bg-white/[0.04] px-2 text-right text-xs text-white focus:border-white/20 focus:outline-none"
                         />
-                        <span className="text-xs text-gray-500">%</span>
+                        <span className="text-xs text-white/40">%</span>
                       </div>
                     </div>
                   ))}
 
                   {totalFriendPct > 100 && (
-                    <p className="text-xs text-red-500">
+                    <p
+                      className="text-xs"
+                      style={{ color: 'var(--color-red)' }}
+                    >
                       La suma de porcentajes excede el 100%
                     </p>
                   )}
@@ -295,10 +366,51 @@ export function TransactionForm({ initialValues, onSubmit, submitLabel, isEdit }
         >
           {submitLabel}
         </Button>
-        <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => navigate(-1)}
+        >
           Cancelar
         </Button>
       </div>
     </form>
+  );
+}
+
+function TypeToggle({
+  active,
+  onClick,
+  icon,
+  label,
+  activeColor,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+  activeColor: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'flex items-center justify-center gap-2 rounded-[10px] py-2.5 text-sm font-medium transition-colors',
+        active ? 'text-white' : 'text-white/50 hover:text-white/70',
+      )}
+      style={
+        active
+          ? {
+              backgroundColor: 'rgba(255,255,255,0.06)',
+              boxShadow: `inset 0 0 0 1px ${activeColor}`,
+              color: activeColor,
+            }
+          : undefined
+      }
+    >
+      {icon}
+      {label}
+    </button>
   );
 }

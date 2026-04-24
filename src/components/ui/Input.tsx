@@ -1,29 +1,65 @@
 import { cn } from '@/utils/cn.ts';
+import type { ReactNode } from 'react';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
+  hint?: string;
+  leftSlot?: ReactNode;
+  rightSlot?: ReactNode;
 }
 
-export function Input({ label, error, className, id, ...props }: InputProps) {
+export function Input({
+  label,
+  error,
+  hint,
+  leftSlot,
+  rightSlot,
+  className,
+  id,
+  ...props
+}: InputProps) {
   const inputId = id ?? label?.toLowerCase().replace(/\s/g, '-');
   return (
-    <div className="space-y-1">
+    <div className="flex flex-col gap-1.5">
       {label && (
-        <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label
+          htmlFor={inputId}
+          className="text-xs font-medium uppercase tracking-wider text-white/50"
+        >
           {label}
         </label>
       )}
-      <input
-        id={inputId}
-        className={cn(
-          'block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500',
-          error && 'border-red-500 focus:border-red-500 focus:ring-red-500',
-          className,
+      <div className="relative">
+        {leftSlot && (
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/40">
+            {leftSlot}
+          </span>
         )}
-        {...props}
-      />
-      {error && <p className="text-sm text-red-500">{error}</p>}
+        <input
+          id={inputId}
+          className={cn(
+            'h-11 w-full rounded-[14px] border bg-white/[0.04] px-4 text-sm text-white placeholder:text-white/30 transition-colors focus:outline-none focus:ring-2 focus:ring-white/10 disabled:opacity-50',
+            Boolean(leftSlot) && 'pl-10',
+            Boolean(rightSlot) && 'pr-10',
+            error
+              ? 'border-[color:var(--color-red)] focus:border-[color:var(--color-red)]'
+              : 'border-white/10 focus:border-white/20 focus:bg-white/[0.06]',
+            className,
+          )}
+          {...props}
+        />
+        {rightSlot && (
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40">
+            {rightSlot}
+          </span>
+        )}
+      </div>
+      {error ? (
+        <p className="text-xs text-[color:var(--color-red)]">{error}</p>
+      ) : hint ? (
+        <p className="text-xs text-white/40">{hint}</p>
+      ) : null}
     </div>
   );
 }

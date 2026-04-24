@@ -1,53 +1,63 @@
-import { ArrowLeftRight } from 'lucide-react';
+import { ArrowLeftRight, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/Card.tsx';
 import { EmptyState } from '@/components/ui/EmptyState.tsx';
-import { Badge } from '@/components/ui/Badge.tsx';
-import { formatCurrency } from '@/utils/formatCurrency.ts';
+import { TransactionRow } from '@/components/ui/TransactionRow.tsx';
 import { formatDateShort } from '@/utils/formatDate.ts';
 import type { TransactionWithCategory } from '@/types/database.ts';
 
 interface RecentTransactionsProps {
   transactions: TransactionWithCategory[];
+  limit?: number;
 }
 
-export function RecentTransactions({ transactions }: RecentTransactionsProps) {
+export function RecentTransactions({
+  transactions,
+  limit = 5,
+}: RecentTransactionsProps) {
   const navigate = useNavigate();
 
   return (
-    <Card title="Transacciones recientes">
+    <Card
+      title="Movimientos recientes"
+      action={
+        transactions.length > 0 && (
+          <button
+            type="button"
+            onClick={() => navigate('/transactions')}
+            className="flex items-center gap-0.5 text-xs font-medium text-white/60 transition-colors hover:text-white"
+          >
+            Ver todos
+            <ChevronRight className="h-3.5 w-3.5" />
+          </button>
+        )
+      }
+    >
       {transactions.length === 0 ? (
         <EmptyState
           icon={ArrowLeftRight}
           title="Sin transacciones"
-          description="Agrega tu primera transaccion para empezar"
-          actionLabel="Nueva transaccion"
+          description="Agregá tu primera transacción para empezar"
+          actionLabel="Nueva transacción"
           onAction={() => navigate('/transactions/new')}
         />
       ) : (
-        <div className="divide-y divide-gray-100 dark:divide-gray-700">
-          {transactions.slice(0, 5).map((t) => (
-            <div key={t.id} className="flex items-center justify-between py-3">
-              <div className="flex items-center gap-3">
-                <Badge label={t.category?.name ?? 'Sin categoría'} color={t.category?.color ?? '#6b7280'} />
-                <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {t.description ?? t.category?.name ?? 'Sin categoría'}
-                  </p>
-                  <p className="text-xs text-gray-500">{formatDateShort(t.date)}</p>
-                </div>
-              </div>
-              <span
-                className={`text-sm font-semibold ${
-                  t.type === 'income' ? 'text-green-600' : 'text-red-600'
-                }`}
-              >
-                {t.type === 'income' ? '+' : '-'}
-                {formatCurrency(t.amount)}
-              </span>
-            </div>
+        <ul className="-mx-2 flex flex-col">
+          {transactions.slice(0, limit).map((t) => (
+            <li key={t.id}>
+              <TransactionRow
+                icon={t.category?.icon ?? '💸'}
+                title={t.description ?? t.category?.name ?? 'Sin categoría'}
+                subtitle={formatDateShort(t.date)}
+                color={t.category?.color ?? '#5352ED'}
+                category={t.category?.name}
+                amount={t.amount}
+                type={t.type}
+                onClick={() => navigate(`/transactions/${t.id}/edit`)}
+              />
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </Card>
   );

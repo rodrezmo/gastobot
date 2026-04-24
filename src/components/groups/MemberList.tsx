@@ -1,6 +1,5 @@
 import { Crown } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatCurrency.ts';
-import { cn } from '@/utils/cn.ts';
 import type { MemberBalance } from '@/types/shared.ts';
 
 interface MemberListProps {
@@ -9,47 +8,68 @@ interface MemberListProps {
   currency?: string;
 }
 
-export function MemberList({ members, adminIds = [], currency = 'ARS' }: MemberListProps) {
+export function MemberList({
+  members,
+  adminIds = [],
+  currency = 'ARS',
+}: MemberListProps) {
   return (
-    <div className="space-y-2">
-      {members.map((m) => (
-        <div
-          key={m.userId}
-          className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
-        >
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-sm font-medium text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">
-              {m.userName.charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <div className="flex items-center gap-1">
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {m.userName}
-                </span>
-                {adminIds.includes(m.userId) && (
-                  <Crown className="h-3.5 w-3.5 text-amber-500" />
-                )}
-              </div>
-              <p className="text-xs text-gray-500">
-                Pagó: {formatCurrency(m.paid, currency)} · Parte justa: {formatCurrency(m.fairShare, currency)}
-              </p>
-            </div>
-          </div>
-          <span
-            className={cn(
-              'text-sm font-bold',
-              m.netBalance > 0.01
-                ? 'text-green-600'
-                : m.netBalance < -0.01
-                  ? 'text-red-600'
-                  : 'text-gray-500',
-            )}
+    <div className="flex flex-col gap-2">
+      {members.map((m) => {
+        const balanceColor =
+          m.netBalance > 0.01
+            ? 'var(--color-green)'
+            : m.netBalance < -0.01
+              ? 'var(--color-red)'
+              : 'rgba(255,255,255,0.5)';
+
+        return (
+          <div
+            key={m.userId}
+            className="flex items-center justify-between gap-3 rounded-[14px] border px-3 py-2.5"
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.03)',
+              borderColor: 'var(--color-border)',
+            }}
           >
-            {m.netBalance > 0.01 && '+'}
-            {formatCurrency(m.netBalance, currency)}
-          </span>
-        </div>
-      ))}
+            <div className="flex min-w-0 items-center gap-3">
+              <div
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                style={{
+                  background: 'var(--grad-primary)',
+                  boxShadow: 'var(--shadow-cta)',
+                }}
+              >
+                {m.userName.charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="truncate text-sm font-medium text-white">
+                    {m.userName}
+                  </span>
+                  {adminIds.includes(m.userId) && (
+                    <Crown
+                      className="h-3.5 w-3.5 shrink-0"
+                      style={{ color: 'var(--color-amber)' }}
+                    />
+                  )}
+                </div>
+                <p className="truncate text-[11px] text-white/40">
+                  Pagó {formatCurrency(m.paid, currency)} · parte justa{' '}
+                  {formatCurrency(m.fairShare, currency)}
+                </p>
+              </div>
+            </div>
+            <span
+              className="shrink-0 text-sm font-bold tabular-nums"
+              style={{ color: balanceColor }}
+            >
+              {m.netBalance > 0.01 && '+'}
+              {formatCurrency(m.netBalance, currency)}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }

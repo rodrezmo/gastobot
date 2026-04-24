@@ -10,11 +10,12 @@ interface SplitMethodSelectorProps {
   participants: UserSearchResult[];
   splits: Map<string, number>;
   onSplitsChange: (splits: Map<string, number>) => void;
+  currency?: string;
 }
 
 const methods: { value: SplitMethod; label: string }[] = [
-  { value: 'equal', label: 'Partes iguales' },
-  { value: 'custom', label: 'Montos personalizados' },
+  { value: 'equal', label: 'Iguales' },
+  { value: 'custom', label: 'Montos' },
   { value: 'percentage', label: 'Porcentaje' },
 ];
 
@@ -25,9 +26,12 @@ export function SplitMethodSelector({
   participants,
   splits,
   onSplitsChange,
+  currency = 'ARS',
 }: SplitMethodSelectorProps) {
   const perPerson =
-    participants.length > 0 ? Math.round((totalAmount / participants.length) * 100) / 100 : 0;
+    participants.length > 0
+      ? Math.round((totalAmount / participants.length) * 100) / 100
+      : 0;
 
   const handleMethodChange = (m: SplitMethod) => {
     onChange(m);
@@ -35,7 +39,10 @@ export function SplitMethodSelector({
     if (m === 'equal') {
       for (const p of participants) newSplits.set(p.id, perPerson);
     } else if (m === 'percentage') {
-      const pct = participants.length > 0 ? Math.round((100 / participants.length) * 100) / 100 : 0;
+      const pct =
+        participants.length > 0
+          ? Math.round((100 / participants.length) * 100) / 100
+          : 0;
       for (const p of participants) newSplits.set(p.id, pct);
     }
     onSplitsChange(newSplits);
@@ -50,19 +57,24 @@ export function SplitMethodSelector({
   const totalSplit = Array.from(splits.values()).reduce((a, b) => a + b, 0);
 
   return (
-    <div className="space-y-4">
-      <div className="flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-700">
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-3 gap-1 rounded-[14px] border border-white/10 bg-white/[0.02] p-1">
         {methods.map((m) => (
           <button
             key={m.value}
             type="button"
             onClick={() => handleMethodChange(m.value)}
             className={cn(
-              'flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+              'rounded-[10px] px-3 py-1.5 text-xs font-medium transition-colors',
               method === m.value
-                ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-600 dark:text-gray-100'
-                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200',
+                ? 'text-white'
+                : 'text-white/50 hover:text-white/70',
             )}
+            style={
+              method === m.value
+                ? { backgroundColor: 'rgba(255,255,255,0.06)' }
+                : undefined
+            }
           >
             {m.label}
           </button>
@@ -70,16 +82,21 @@ export function SplitMethodSelector({
       </div>
 
       {participants.length > 0 && (
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           {participants.map((p) => (
-            <div key={p.id} className="flex items-center justify-between gap-3">
-              <span className="text-sm text-gray-700 dark:text-gray-300">
+            <div
+              key={p.id}
+              className="flex items-center justify-between gap-3"
+            >
+              <span className="min-w-0 truncate text-sm text-white/80">
                 @{p.nickname}
-                {p.full_name ? ` · ${p.full_name}` : ''}
+                {p.full_name ? (
+                  <span className="text-white/40"> · {p.full_name}</span>
+                ) : null}
               </span>
               {method === 'equal' ? (
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {formatCurrency(perPerson)}
+                <span className="shrink-0 text-sm font-medium tabular-nums text-white">
+                  {formatCurrency(perPerson, currency)}
                 </span>
               ) : method === 'custom' ? (
                 <Input
@@ -87,7 +104,9 @@ export function SplitMethodSelector({
                   min={0}
                   step={0.01}
                   value={splits.get(p.id) ?? 0}
-                  onChange={(e) => handleSplitChange(p.id, parseFloat(e.target.value) || 0)}
+                  onChange={(e) =>
+                    handleSplitChange(p.id, parseFloat(e.target.value) || 0)
+                  }
                   className="w-32 text-right"
                 />
               ) : (
@@ -98,10 +117,15 @@ export function SplitMethodSelector({
                     max={100}
                     step={0.01}
                     value={splits.get(p.id) ?? 0}
-                    onChange={(e) => handleSplitChange(p.id, parseFloat(e.target.value) || 0)}
+                    onChange={(e) =>
+                      handleSplitChange(
+                        p.id,
+                        parseFloat(e.target.value) || 0,
+                      )
+                    }
                     className="w-20 text-right"
                   />
-                  <span className="text-sm text-gray-500">%</span>
+                  <span className="text-sm text-white/40">%</span>
                 </div>
               )}
             </div>
@@ -109,26 +133,34 @@ export function SplitMethodSelector({
 
           {method === 'custom' && (
             <p
-              className={cn(
-                'text-xs',
-                Math.abs(totalSplit - totalAmount) < 0.01 ? 'text-green-600' : 'text-red-500',
-              )}
+              className="text-xs"
+              style={{
+                color:
+                  Math.abs(totalSplit - totalAmount) < 0.01
+                    ? 'var(--color-green)'
+                    : 'var(--color-red)',
+              }}
             >
-              Total: {formatCurrency(totalSplit)} / {formatCurrency(totalAmount)}
+              Total: {formatCurrency(totalSplit, currency)} /{' '}
+              {formatCurrency(totalAmount, currency)}
               {Math.abs(totalSplit - totalAmount) >= 0.01 &&
-                ` (faltan ${formatCurrency(totalAmount - totalSplit)})`}
+                ` · faltan ${formatCurrency(totalAmount - totalSplit, currency)}`}
             </p>
           )}
 
           {method === 'percentage' && (
             <p
-              className={cn(
-                'text-xs',
-                Math.abs(totalSplit - 100) < 0.01 ? 'text-green-600' : 'text-red-500',
-              )}
+              className="text-xs"
+              style={{
+                color:
+                  Math.abs(totalSplit - 100) < 0.01
+                    ? 'var(--color-green)'
+                    : 'var(--color-red)',
+              }}
             >
               Total: {totalSplit.toFixed(1)}%
-              {Math.abs(totalSplit - 100) >= 0.01 && ` (faltan ${(100 - totalSplit).toFixed(1)}%)`}
+              {Math.abs(totalSplit - 100) >= 0.01 &&
+                ` · faltan ${(100 - totalSplit).toFixed(1)}%`}
             </p>
           )}
         </div>

@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Receipt, Users, Scale } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Card } from '@/components/ui/Card.tsx';
 import { Badge } from '@/components/ui/Badge.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
+import { FilterPills } from '@/components/ui/FilterPills.tsx';
 import { GroupExpenseList } from '@/components/groups/GroupExpenseList.tsx';
 import { GroupExpenseForm } from '@/components/groups/GroupExpenseForm.tsx';
 import { MemberList } from '@/components/groups/MemberList.tsx';
@@ -12,15 +13,14 @@ import { FriendSearch } from '@/components/shared/FriendSearch.tsx';
 import { useGroupDetail } from '@/hooks/useGroupDetail.ts';
 import { useAuthStore } from '@/stores/authStore.ts';
 import { formatCurrency } from '@/utils/formatCurrency.ts';
-import { cn } from '@/utils/cn.ts';
 import type { MemberBalance, UserSearchResult } from '@/types/shared.ts';
 
 type Tab = 'expenses' | 'members' | 'balance';
 
 const statusConfig = {
-  active: { label: 'Activa', color: '#10b981' },
-  settled: { label: 'Liquidada', color: '#6366f1' },
-  archived: { label: 'Archivada', color: '#6b7280' },
+  active: { label: 'Activa', color: '#2ED573' },
+  settled: { label: 'Liquidada', color: '#5352ED' },
+  archived: { label: 'Archivada', color: '#8A8A99' },
 };
 
 export function GroupDetailPage() {
@@ -63,7 +63,10 @@ export function GroupDetailPage() {
   }, [group]);
 
   const adminIds = useMemo(
-    () => (group?.members.filter((m) => m.role === 'admin').map((m) => m.user_id) ?? []),
+    () =>
+      group?.members
+        .filter((m) => m.role === 'admin')
+        .map((m) => m.user_id) ?? [],
     [group],
   );
 
@@ -76,68 +79,66 @@ export function GroupDetailPage() {
     try {
       await addMember(selectedUser.id);
     } catch (err) {
-      setAddMemberError(err instanceof Error ? err.message : 'Error al agregar miembro');
+      setAddMemberError(
+        err instanceof Error ? err.message : 'Error al agregar miembro',
+      );
     } finally {
       setAddingMember(false);
     }
   };
 
   if (loading && !group) return <Spinner className="py-12" />;
-  if (!group) return <p className="py-12 text-center text-gray-500">Grupo no encontrado</p>;
-
-  const tabs: { id: Tab; label: string; icon: typeof Receipt }[] = [
-    { id: 'expenses', label: 'Gastos', icon: Receipt },
-    { id: 'members', label: 'Miembros', icon: Users },
-    { id: 'balance', label: 'Balance', icon: Scale },
-  ];
+  if (!group) {
+    return (
+      <p className="py-12 text-center text-sm text-white/40">
+        Grupo no encontrado
+      </p>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex items-start gap-3">
         <button
           onClick={() => navigate('/shared')}
-          className="mt-1 rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"
+          className="mt-1 flex h-9 w-9 items-center justify-center rounded-[12px] text-white/50 transition-colors hover:bg-white/5 hover:text-white"
+          aria-label="Volver"
         >
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeft className="h-4 w-4" />
         </button>
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{group.name}</h1>
+            <h1 className="font-display truncate text-3xl text-white">
+              {group.name}
+            </h1>
             <Badge {...statusConfig[group.status]} />
           </div>
           {group.description && (
-            <p className="mt-1 text-sm text-gray-500">{group.description}</p>
+            <p className="mt-1 text-sm text-white/50">{group.description}</p>
           )}
-          <p className="mt-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-            Total: {formatCurrency(group.total, group.currency)} · {group.members.length} miembro
+          <p className="mt-1 text-xs uppercase tracking-wider text-white/40">
+            Total{' '}
+            <span className="text-white/80">
+              {formatCurrency(group.total, group.currency)}
+            </span>{' '}
+            · {group.members.length} miembro
             {group.members.length !== 1 ? 's' : ''} · {group.currency}
           </p>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-700">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              'flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors',
-              activeTab === tab.id
-                ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-600 dark:text-gray-100'
-                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200',
-            )}
-          >
-            <tab.icon className="h-4 w-4" />
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <FilterPills<Tab>
+        value={activeTab}
+        onChange={setActiveTab}
+        options={[
+          { value: 'expenses', label: 'Gastos', count: group.expenses.length },
+          { value: 'members', label: 'Miembros', count: group.members.length },
+          { value: 'balance', label: 'Balance' },
+        ]}
+      />
 
-      {/* Tab content */}
       {activeTab === 'expenses' && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {group.status === 'active' && (
             <Card title="Agregar gasto">
               <GroupExpenseForm groupId={group.id} onSubmit={addExpense} />
@@ -148,29 +149,44 @@ export function GroupDetailPage() {
               expenses={group.expenses}
               currentUserId={user?.id ?? ''}
               currency={group.currency}
-              onDelete={group.status === 'active' ? (id) => void deleteExpense(id) : undefined}
+              onDelete={
+                group.status === 'active'
+                  ? (id) => void deleteExpense(id)
+                  : undefined
+              }
             />
           </Card>
         </div>
       )}
 
       {activeTab === 'members' && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <Card title="Miembros">
-            <MemberList members={memberBalances} adminIds={adminIds} currency={group.currency} />
+            <MemberList
+              members={memberBalances}
+              adminIds={adminIds}
+              currency={group.currency}
+            />
           </Card>
           {isCreator && group.status === 'active' && (
             <Card title="Agregar miembro">
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <FriendSearch
                   onSelect={handleAddMember}
                   excludeIds={group.members.map((m) => m.user_id)}
                 />
                 {addingMember && (
-                  <p className="text-xs text-gray-500">Agregando miembro...</p>
+                  <p className="text-xs text-white/40">
+                    Agregando miembro...
+                  </p>
                 )}
                 {addMemberError && (
-                  <p className="text-xs text-red-500">{addMemberError}</p>
+                  <p
+                    className="text-xs"
+                    style={{ color: 'var(--color-red)' }}
+                  >
+                    {addMemberError}
+                  </p>
                 )}
               </div>
             </Card>
@@ -179,7 +195,7 @@ export function GroupDetailPage() {
       )}
 
       {activeTab === 'balance' && (
-        <Card title="Balance y liquidacion">
+        <Card title="Balance y liquidación">
           <SettlementSummary
             transfers={settlements}
             groupId={group.id}

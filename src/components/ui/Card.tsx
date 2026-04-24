@@ -1,21 +1,49 @@
 import { cn } from '@/utils/cn.ts';
+import type { ReactNode } from 'react';
 
 interface CardProps {
   title?: string;
-  children: React.ReactNode;
+  action?: ReactNode;
+  children: ReactNode;
   className?: string;
+  padding?: 'none' | 'sm' | 'md' | 'lg';
 }
 
-export function Card({ title, children, className }: CardProps) {
+const paddingStyles = {
+  none: 'p-0',
+  sm: 'p-4',
+  md: 'p-5',
+  lg: 'p-6',
+};
+
+export function Card({
+  title,
+  action,
+  children,
+  className,
+  padding = 'md',
+}: CardProps) {
   return (
     <div
       className={cn(
-        'rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800',
+        'shadow-card rounded-[20px] border',
+        paddingStyles[padding],
         className,
       )}
+      style={{
+        backgroundColor: 'var(--color-surface)',
+        borderColor: 'var(--color-border)',
+      }}
     >
-      {title && (
-        <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
+      {(title || action) && (
+        <div className="mb-4 flex items-center justify-between">
+          {title && (
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-white/50">
+              {title}
+            </h3>
+          )}
+          {action && <div>{action}</div>}
+        </div>
       )}
       {children}
     </div>

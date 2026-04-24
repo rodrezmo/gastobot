@@ -5,7 +5,7 @@ import type { UIState } from '@/types/store.ts';
 export const useUIStore = create(
   persist<UIState>(
     (set) => ({
-      theme: 'light',
+      theme: 'dark',
       sidebarOpen: false,
       toggleTheme: () =>
         set((s) => ({

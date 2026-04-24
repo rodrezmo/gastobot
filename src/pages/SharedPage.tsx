@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button.tsx';
 import { Card } from '@/components/ui/Card.tsx';
 import { Spinner } from '@/components/ui/Spinner.tsx';
 import { EmptyState } from '@/components/ui/EmptyState.tsx';
+import { FilterPills } from '@/components/ui/FilterPills.tsx';
 import { SharedTransactionCard } from '@/components/shared/SharedTransactionCard.tsx';
 import { SharedNotificationList } from '@/components/shared/SharedNotificationList.tsx';
 import { BalanceCard } from '@/components/shared/BalanceCard.tsx';
@@ -12,16 +13,22 @@ import { GroupCard } from '@/components/groups/GroupCard.tsx';
 import { useSharedExpenses } from '@/hooks/useSharedExpenses.ts';
 import { useGroups } from '@/hooks/useGroups.ts';
 import { useAuthStore } from '@/stores/authStore.ts';
-import { cn } from '@/utils/cn.ts';
 
 type Tab = 'expenses' | 'groups';
 
 export function SharedPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('expenses');
-  const { pending, sent, balances, loading: sharedLoading, respond } = useSharedExpenses();
+  const {
+    pending,
+    sent,
+    balances,
+    loading: sharedLoading,
+    respond,
+  } = useSharedExpenses();
   const { groups, loading: groupsLoading } = useGroups();
   const user = useAuthStore((s) => s.user);
+  const currency = user?.currency ?? 'ARS';
 
   const loading = sharedLoading || groupsLoading;
 
@@ -29,15 +36,15 @@ export function SharedPage() {
     return <Spinner className="py-12" />;
   }
 
-  const tabs: { id: Tab; label: string; icon: typeof ArrowLeftRight }[] = [
-    { id: 'expenses', label: 'Gastos Compartidos', icon: ArrowLeftRight },
-    { id: 'groups', label: 'Grupos (Vaquitas)', icon: Users },
-  ];
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Compartidos</h1>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl text-white">Compartidos</h1>
+          <p className="mt-1 text-sm text-white/50">
+            Gastos con amigos y vaquitas grupales
+          </p>
+        </div>
         {activeTab === 'groups' && (
           <Button onClick={() => navigate('/shared/groups/new')}>
             <PlusCircle className="h-4 w-4" />
@@ -46,55 +53,67 @@ export function SharedPage() {
         )}
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-700">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              'flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors',
-              activeTab === tab.id
-                ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-600 dark:text-gray-100'
-                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200',
-            )}
-          >
-            <tab.icon className="h-4 w-4" />
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <FilterPills<Tab>
+        value={activeTab}
+        onChange={setActiveTab}
+        options={[
+          {
+            value: 'expenses',
+            label: 'Gastos compartidos',
+            count: pending.length + sent.length,
+          },
+          {
+            value: 'groups',
+            label: 'Vaquitas',
+            count: groups.length,
+          },
+        ]}
+      />
 
       {activeTab === 'expenses' ? (
         <div className="space-y-6">
-          {/* Pending notifications */}
           {pending.length > 0 && (
-            <Card title="Pendientes">
+            <Card
+              title="Pendientes"
+              action={
+                <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-white/40">
+                  <ArrowLeftRight className="h-3 w-3" />
+                  {pending.length}
+                </span>
+              }
+            >
               <SharedNotificationList
                 expenses={pending}
                 onRespond={respond}
                 currentUserId={user?.id ?? ''}
+                currency={currency}
               />
             </Card>
           )}
 
-          {/* Balances */}
           {balances.length > 0 && (
             <Card title="Balance">
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 {balances.map((b) => (
-                  <BalanceCard key={b.userId} balance={b} />
+                  <BalanceCard
+                    key={b.userId}
+                    balance={b}
+                    currency={currency}
+                  />
                 ))}
               </div>
             </Card>
           )}
 
-          {/* My shared expenses */}
           {sent.length > 0 ? (
             <Card title="Gastos compartidos enviados">
-              <div className="space-y-3">
+              <div className="flex flex-col gap-3">
                 {sent.map((s) => (
-                  <SharedTransactionCard key={s.id} shared={s} />
+                  <SharedTransactionCard
+                    key={s.id}
+                    shared={s}
+                    currency={currency}
+                  />
                 ))}
               </div>
             </Card>
@@ -104,7 +123,7 @@ export function SharedPage() {
               <EmptyState
                 icon={Bell}
                 title="Sin gastos compartidos"
-                description="Comparti un gasto desde la lista de transacciones para dividirlo con amigos."
+                description="Compartí un gasto desde la lista de transacciones para dividirlo con amigos."
               />
             )
           )}
@@ -121,7 +140,7 @@ export function SharedPage() {
             <EmptyState
               icon={Users}
               title="Sin vaquitas"
-              description="Crea una vaquita para dividir gastos grupales con amigos."
+              description="Creá una vaquita para dividir gastos grupales con amigos."
               actionLabel="Nueva vaquita"
               onAction={() => navigate('/shared/groups/new')}
             />

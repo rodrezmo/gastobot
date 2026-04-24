@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, X } from 'lucide-react';
 import { Card } from '@/components/ui/Card.tsx';
 import { Input } from '@/components/ui/Input.tsx';
+import { Select } from '@/components/ui/Select.tsx';
 import { Button } from '@/components/ui/Button.tsx';
 import { FriendSearch } from '@/components/shared/FriendSearch.tsx';
 import { useGroupStore } from '@/stores/groupStore.ts';
@@ -43,26 +44,35 @@ export function CreateGroupPage() {
       });
       navigate('/shared');
     } catch {
-      setError('Error al crear la vaquita. Intenta de nuevo.');
+      setError('Error al crear la vaquita. Intentá de nuevo.');
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
+    <div className="mx-auto max-w-2xl space-y-6">
+      <div className="flex items-start gap-3">
         <button
           onClick={() => navigate('/shared')}
-          className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"
+          className="mt-1 flex h-9 w-9 items-center justify-center rounded-[12px] text-white/50 transition-colors hover:bg-white/5 hover:text-white"
+          aria-label="Volver"
         >
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeft className="h-4 w-4" />
         </button>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Nueva vaquita</h1>
+        <div>
+          <h1 className="font-display text-3xl text-white">Nueva vaquita</h1>
+          <p className="mt-1 text-sm text-white/50">
+            Creá un grupo para dividir gastos compartidos
+          </p>
+        </div>
       </div>
 
       <Card>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={(e) => void handleSubmit(e)}
+          className="flex flex-col gap-4"
+        >
           <Input
             label="Nombre del grupo"
             placeholder="Ej: Viaje a Bariloche"
@@ -72,32 +82,28 @@ export function CreateGroupPage() {
           />
 
           <Input
-            label="Descripcion (opcional)"
+            label="Descripción (opcional)"
             placeholder="Ej: Gastos del viaje de enero..."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Moneda
-            </label>
-            <select
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-            >
-              <option value="ARS">ARS - Peso argentino</option>
-              <option value="USD">USD - Dólar</option>
-              <option value="EUR">EUR - Euro</option>
-              <option value="BRL">BRL - Real brasileño</option>
-              <option value="CLP">CLP - Peso chileno</option>
-              <option value="UYU">UYU - Peso uruguayo</option>
-            </select>
-          </div>
+          <Select
+            label="Moneda"
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
+            options={[
+              { value: 'ARS', label: 'ARS · Peso argentino' },
+              { value: 'USD', label: 'USD · Dólar' },
+              { value: 'EUR', label: 'EUR · Euro' },
+              { value: 'BRL', label: 'BRL · Real brasileño' },
+              { value: 'CLP', label: 'CLP · Peso chileno' },
+              { value: 'UYU', label: 'UYU · Peso uruguayo' },
+            ]}
+          />
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <div className="flex flex-col gap-2">
+            <label className="text-[11px] font-medium uppercase tracking-wider text-white/50">
               Miembros
             </label>
             <FriendSearch
@@ -105,32 +111,46 @@ export function CreateGroupPage() {
               excludeIds={members.map((m) => m.id)}
             />
             {members.length > 0 && (
-              <div className="mt-3 space-y-2">
+              <div className="mt-2 flex flex-col gap-2">
                 {members.map((m) => (
                   <div
                     key={m.id}
-                    className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-700/50"
+                    className="flex items-center justify-between rounded-[12px] border border-white/10 bg-white/[0.03] px-3 py-2"
                   >
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-100 text-xs font-medium text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">
-                        {(m.full_name || m.nickname).charAt(0).toUpperCase()}
+                    <div className="flex min-w-0 items-center gap-2">
+                      <div
+                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                        style={{
+                          background: 'var(--grad-primary)',
+                          boxShadow: 'var(--shadow-cta)',
+                        }}
+                      >
+                        {(m.full_name || m.nickname)
+                          .charAt(0)
+                          .toUpperCase()}
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm text-white">
                           @{m.nickname}
                           {m.full_name ? (
-                            <span className="ml-1 font-normal text-gray-500">· {m.full_name}</span>
+                            <span className="text-white/40">
+                              {' '}
+                              · {m.full_name}
+                            </span>
                           ) : null}
                         </p>
-                        <p className="text-xs text-gray-500">{m.masked_email}</p>
+                        <p className="truncate text-[11px] text-white/40">
+                          {m.masked_email}
+                        </p>
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => handleRemoveMember(m.id)}
-                      className="rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-600"
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white/40 transition-colors hover:bg-white/10 hover:text-[color:var(--color-red)]"
+                      aria-label="Quitar"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 ))}
@@ -138,9 +158,25 @@ export function CreateGroupPage() {
             )}
           </div>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && (
+            <div
+              className="rounded-[14px] border px-3 py-2.5 text-sm"
+              style={{
+                backgroundColor: 'rgba(255,71,87,0.08)',
+                borderColor: 'rgba(255,71,87,0.2)',
+                color: 'var(--color-red)',
+              }}
+            >
+              {error}
+            </div>
+          )}
 
-          <Button type="submit" loading={submitting} disabled={!name.trim()} className="w-full">
+          <Button
+            type="submit"
+            loading={submitting}
+            disabled={!name.trim()}
+            fullWidth
+          >
             Crear vaquita
           </Button>
         </form>
